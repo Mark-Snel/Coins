@@ -70,3 +70,78 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Unity specific files to ignore
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+UserSettings/
+MemoryCaptures/
+Logs/
+
+# Ignore Asset Store Tools
+**/Assets/AssetStoreTools/
+
+# Ignore PlasticSCM related files
+/Assets/Plugins/PlasticSCM*
+
+# Private and metadata files
+*.private
+*.private.meta
+^*.private.[0-9]+$
+^*.private.[0-9]+.meta$
+
+# IDE and editor specific files
+.vs/
+.vscode/
+.idea/
+.consulo/
+.gradle/
+
+# Project specific files
+ExportedObj/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Meta files for ignored files
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# System generated files
+sysinfo.txt
+crashlytics-build.properties
+
+# Build artifacts
+*.apk
+*.aab
+*.app
+*.unitypackage
+
+# Addressable Assets cache and StreamingAssets
+**/Assets/AddressableAssetsData/*/*.bin*
+**/Assets/StreamingAssets/aa.meta
+**/Assets/StreamingAssets/*/aa/*
+
+# OS specific files
+.DS_Store*
+Thumbs.db
+Desktop.ini
+
+# Custom ignored directories
+/Result/
+/Github/

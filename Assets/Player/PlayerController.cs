@@ -132,9 +132,9 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     void ProcessHorizontalMovement()
     {
+        //dont mind the jankyness of this code, it is to revive a dead project and keep the feel the same.
         float currentVelocityX = rb.linearVelocity.x;
         float input = moveAction.ReadValue<float>();
-        Debug.Log(input);
         if (input < 0)
         {
             float forceLeft1 = Mathf.Max(currentVelocityX * -2f + input * speed * 2f, input * acceleration * mass);

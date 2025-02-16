@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerCamera : MonoBehaviour
 {
     public Vector3 DynamicOffset = new Vector3(0, 0.5f, 0);
-    public Vector2 DynamicBoundary = Vector2.zero; //max width and height for the camera to travel to, should be set to the total width and height of the 'map'
+    public Vector2 MapSize = Vector2.zero; //max width and height for the camera to travel to, should be set to the total width and height of the 'map'
     public float smoothSpeed = 0.1f;
     public float lookAheadFactor = 0.2f;
     public float maxLookAhead = 3f;
@@ -32,11 +32,14 @@ public class PlayerCamera : MonoBehaviour
     }
 
     void LateUpdate() {
+        float camHalfHeight= Camera.main.orthographicSize;
+        float camHalfWidth = camHalfHeight * Camera.main.aspect;
+
         if (player != null && !playerController.IsDead) {
             Vector3 lookAheadOffset = Vector3.ClampMagnitude((Vector3)rb.linearVelocity * lookAheadFactor, maxLookAhead);
             Vector3 desiredPosition = player.position + lookAheadOffset + DynamicOffset;
-            float clampedX = Mathf.Clamp(desiredPosition.x, -DynamicBoundary.x / 2, DynamicBoundary.x / 2);
-            float clampedY = Mathf.Clamp(desiredPosition.y, -DynamicBoundary.y / 2, DynamicBoundary.y / 2);
+            float clampedX = Mathf.Clamp(desiredPosition.x, Mathf.Min((-MapSize.x / 2) + camHalfWidth, 0), Mathf.Max((MapSize.x / 2) - camHalfWidth, 0));
+            float clampedY = Mathf.Clamp(desiredPosition.y, Mathf.Min((-MapSize.y / 2) + camHalfHeight, 0), Mathf.Max((MapSize.y / 2) - camHalfHeight, 0));
             transform.position = Vector3.Lerp(transform.position, new Vector3(clampedX, clampedY, transform.position.z), smoothSpeed);
         } else {
             transform.position = Vector3.Lerp(transform.position, Vector3.zero, smoothSpeed);

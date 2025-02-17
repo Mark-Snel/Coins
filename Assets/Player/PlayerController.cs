@@ -151,11 +151,18 @@ public class PlayerController : MonoBehaviour
         jumpState = KeyState.None;
     }
 
+    private void OnCollisionEnter2D(Collision2D collision) {
+        ProcessJumpReset(collision);
+    }
+    private void OnCollisionStay2D(Collision2D collision) {
+        ProcessJumpReset(collision);
+    }
+
     void ProcessJump() {
         if ((jumpState == KeyState.Pressed && jumpsRemaining > 0) || (jumpState == KeyState.Held && jumpsRemaining == maxJumps))
         {
             float jumpImpulse = Mathf.Sqrt(jumpHeight);
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpImpulse);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(jumpImpulse, rb.linearVelocity.y));
 
             jumpsRemaining--;
             jumpLengthRemaining = jumpLength;
@@ -166,6 +173,19 @@ public class PlayerController : MonoBehaviour
             float holdForce = Mathf.Sqrt(jumpHeight) * 2f * rb.mass;
             rb.AddForce(Vector2.up * holdForce);
             jumpLengthRemaining--;  // decrement the hold time counter
+        }
+    }
+
+    void ProcessJumpReset(Collision2D collision) {
+        foreach (ContactPoint2D contact in collision.contacts) {
+            Vector2 normal = contact.normal;
+            float angle = Vector2.Angle(normal, Vector2.up); //Angle between normal and "up" (0° is perfectly flat ground)
+
+            if (angle <= 45f) { //Allow jumps only if the slope is <= 45 degrees
+                jumpsRemaining = MaxJumps;
+                jumpLengthRemaining = 0;
+                break;
+            }
         }
     }
 
@@ -185,19 +205,6 @@ public class PlayerController : MonoBehaviour
             float forceRight2 = Mathf.Min(currentVelocityX * -acceleration + input * acceleration, input * 2f * acceleration);
             float computedForceX = Mathf.Max(Mathf.Max(forceRight1, forceRight2), 0f);
             rb.AddForce(new Vector2(computedForceX * rb.mass, 0f));
-        }
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision) {
-        foreach (ContactPoint2D contact in collision.contacts) {
-            Vector2 normal = contact.normal;
-            float angle = Vector2.Angle(normal, Vector2.up); //Angle between normal and "up" (0° is perfectly flat ground)
-
-            if (angle <= 45f) { //Allow jumps only if the slope is <= 45 degrees
-                jumpsRemaining = MaxJumps;
-                jumpLengthRemaining = 0;
-                break;
-            }
         }
     }
 

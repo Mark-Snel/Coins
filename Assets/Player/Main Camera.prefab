@@ -45,7 +45,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.1981132, g: 0.20784314, b: 0.23137255, a: 1}
+  m_BackGroundColor: {r: 0.10980392, g: 0.105882354, b: 0.13333334, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DynamicOffset: {x: 0, y: 0.5, z: 0}
-  DynamicBoundary: {x: 0, y: 0}
+  MapSize: {x: 0, y: 0}
   smoothSpeed: 0.1
   lookAheadFactor: 0.2
   maxLookAhead: 3

@@ -141,9 +141,6 @@ public class PlayerController : MonoBehaviour
         if (!isDead) {
             ProcessJump();
             ProcessHorizontalMovement();
-            //TODO: TEMPORARY:
-                if (rb.position.y <= -10) rb.position = Vector2.zero;
-            //END
             if (health <= 0) {
                 IsDead = true;
             }

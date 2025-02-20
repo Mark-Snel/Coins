@@ -11,7 +11,7 @@ public class MenuButton : MonoBehaviour
     private Vector3 defaultScale;
     private Vector3 defaultPosition;
     private Vector3 defaultTextPosition;
-    private float scaleSmoothFactor = 0.25f;
+    private float scaleSmoothFactor = 25f;
     private float positionSmoothFactor = 25f;
     private InputAction attackAction;
     private MenuCoin coin;
@@ -48,7 +48,7 @@ public class MenuButton : MonoBehaviour
             coin.Goto(transform.position.x + transform.localScale.x/2, transform.position.y, action);
             locked = true;
         }
-        Vector3 scale = Vector3.Lerp(transform.localScale, selected ? selectedScale : defaultScale, scaleSmoothFactor);
+        Vector3 scale = Vector3.Lerp(transform.localScale, selected ? selectedScale : defaultScale, 1 - Mathf.Exp(-scaleSmoothFactor * Time.deltaTime));
 
         float i = Mathf.Min((Mathf.Max(defaultPosition.x - transform.position.x, 0.1f) / cameraWidth) * positionSmoothFactor * Time.deltaTime, 0.4f);
         Vector3 position = Vector3.Lerp(transform.position, active ?

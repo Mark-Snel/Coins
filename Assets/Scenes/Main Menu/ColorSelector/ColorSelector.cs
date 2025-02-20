@@ -34,7 +34,7 @@ public class ColorSelector : MonoBehaviour
             deepObject.Find("Secondary").GetComponent<SpriteRenderer>().color = Color.white;
         }
         innerObject.localPosition = Vector3.Lerp(startPosition, targetPosition, interpolationFactor);
-        defaultScale = new Vector3(Mathf.Min(Mathf.Max(interpolationFactor, deepObject.localScale.x), 1), 1, 1);
+        defaultScale = new Vector3(Mathf.Min(interpolationFactor, 1), 1, 1);
     }
 
     public void MouseEnter() {

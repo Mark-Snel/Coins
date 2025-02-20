@@ -9,6 +9,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
     private float progress = 0f; //Progress value from 0 (start) to 1 (target)
     private float progressY = 0f; //Also that but different timing
     private float progress1 = 0f;
+    private float progress2 = 0f;
     private Vector3 startPosition;
     private Vector3 targetPosition;
     private MenuAction? setAction;
@@ -18,8 +19,14 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
     private Vector3 oinsEndPosition;
     private float oinsDistance;
     private InputAction aimAction;
+    private bool colorSelected = false;
     public GameObject prefab;
     public GameObject selectorParent;
+    private bool selectingColor = false;
+
+    public bool IsInColorMenu() {
+        return selectingColor;
+    }
 
     void Start() {
         aimAction = InputSystem.actions.FindAction("Aim");
@@ -85,6 +92,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
             }
             transform.position = new Vector3(0, transform.localScale.y + Camera.main.orthographicSize, transform.position.z);
         } else if (transform.position.y != 0){
+            selectingColor = true;
             Vector3 newPosition = Vector3.Lerp(transform.position, new Vector3(0, 0, transform.position.z), 6 * Time.deltaTime);
             transform.position = newPosition.y < 0.005f ? new Vector3(0, 0, transform.position.z) : newPosition;
             if (transform.position.y == 0) {//Should only work a single frame
@@ -101,20 +109,26 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
                     innerObject.localPosition = new Vector3(radius, 0, 0);
                     Transform deepObject = innerObject.Find("Deep");
                     deepObject.GetComponent<ObjectDecorator>().Color = i;
-                    deepObject.localScale = new Vector3(0.2f, 1, 0);
+                    deepObject.localScale = new Vector3(0, 1, 0);
                 }
             }
             transform.rotation = Quaternion.Euler(0, 0, GetRotationToCursor(Vector3.zero, aimAction, Camera.main) - 45);
         } else {
             transform.rotation = Quaternion.Euler(0, 0, GetRotationToCursor(Vector3.zero, aimAction, Camera.main) - 45);
             progress1 = Mathf.Lerp(progress1, 1, 1 - Mathf.Exp(-Time.deltaTime));
+            if (!colorSelected) {
+                progress2 = Mathf.Lerp(progress2, 1, 1 - Mathf.Exp(-3 * Time.deltaTime));
+            } else {
+                progress2 = Mathf.Max(progress2 - (Mathf.Max(1 - progress2, 0.1f)) * 2 * Time.deltaTime, 0);
+            }
             selectorParent.transform.Rotate(0, 0, -((1 - progress1) * 17 + 8 * Time.deltaTime));
             foreach (Transform selector in selectorParent.transform) {
-                selector.GetComponent<ColorSelector>().Expand(Mathf.Min(progress1 * 2f, 1));
+                selector.GetComponent<ColorSelector>().Expand(Mathf.Min(progress2, 1));
             }
         }
     }
     public void SelectColor() {
+        colorSelected = true;
         PlayerPrefs.SetInt("Color", GetComponent<ObjectDecorator>().Color);
         PlayerPrefs.Save();
     }

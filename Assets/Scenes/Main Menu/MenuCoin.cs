@@ -1,25 +1,37 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using static InputHandling;
 
-public class MenuCoin : MonoBehaviour
+public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anyway?
 {
     public float transitionSpeed = 60f;
     public float rotationIntensity = 515f;
     private float progress = 0f; //Progress value from 0 (start) to 1 (target)
     private float progressY = 0f; //Also that but different timing
+    private float progress1 = 0f;
+    private float progress2 = 0;
     private Vector3 startPosition;
     private Vector3 targetPosition;
     private MenuAction? setAction;
     private MenuButton[] buttons;
     private Transform oins;
     private Vector3 oinsStartPosition;
+    private Vector3 oinsEndPosition;
+    private float oinsDistance;
+    private InputAction aimAction;
+    public GameObject prefab;
+    public GameObject selectorParent;
 
     void Start() {
+        aimAction = InputSystem.actions.FindAction("Aim");
         startPosition = transform.position;
         oins = GameObject.Find("Oins")?.transform;
         if (oins == null) {
             Debug.LogWarning("Oins not found");
         } else {
             oinsStartPosition = oins.position;
+            oinsDistance = Camera.main.orthographicSize - oinsStartPosition.y + (oins.localScale.y/2);
+            oinsEndPosition = new Vector3(oinsStartPosition.x, oinsStartPosition.y + oinsDistance, oinsStartPosition.z);
         }
     }
     public void Goto(float x, float y, MenuAction action) {
@@ -54,21 +66,56 @@ public class MenuCoin : MonoBehaviour
                 case MenuAction.Play:
                     break;
                 case MenuAction.Colors:
-                    foreach (MenuButton button in buttons)
-                    {
-                        button.active = false;
-                    }
-                    transform.position = new Vector3(0, transform.localScale.y + Camera.main.orthographicSize, transform.position.z);
-
-                    float distance = Camera.main.orthographicSize - oinsStartPosition.y + (oins.localScale.y/2);
-                    float i = Mathf.Min((Mathf.Max(oins.position.y - oinsStartPosition.y, 0.1f) / distance) * 25 * Time.deltaTime, 0.4f);
-                    Vector3 position = Vector3.Lerp(oins.position, new Vector3(oinsStartPosition.x, oinsStartPosition.y + distance, oinsStartPosition.z), i);
-                    oins.position = position;
+                    selectColor();
                     break;
                 default:
                     progressY = 0;
                     setAction = null;
                     break;
+            }
+        }
+    }
+    void selectColor() {
+        if (oins.position.y < oinsEndPosition.y - 0.01) {
+            float i = Mathf.Min((Mathf.Max(oins.position.y - oinsStartPosition.y, 0.1f) / oinsDistance) * 25 * Time.deltaTime, 0.4f);
+            Vector3 position = Vector3.Lerp(oins.position, oinsEndPosition, i);
+            oins.position = position;
+            foreach (MenuButton button in buttons)
+            {
+                button.active = false;
+            }
+            transform.position = new Vector3(0, transform.localScale.y + Camera.main.orthographicSize, transform.position.z);
+        } else if (transform.position.y != 0){
+            Vector3 newPosition = Vector3.Lerp(transform.position, new Vector3(0, 0, transform.position.z), 0.05f);
+            transform.position = newPosition.y < 0.005f ? new Vector3(0, 0, transform.position.z) : newPosition;
+            if (transform.position.y == 0) {//Should only work a single frame
+                for (int i = 0; i < 24; i++) {
+                    int groupIndex = i / 3; //Which group this object belongs to
+                    int rowIndex = i % 3;  //Which row within the group
+
+                    float angle = groupIndex * -45; //Base angle for the group
+                    float radius = (rowIndex) * 0.5f + 2.5f; //Distance from center
+
+                    Quaternion rotation = Quaternion.Euler(0, 0, angle);
+                    GameObject selector = Instantiate(prefab, Vector3.zero, rotation, selectorParent.transform);
+                    Transform innerObject = selector.transform.Find("Inner");
+                    innerObject.localPosition = new Vector3(radius, 0, 0);
+                    Transform deepObject = innerObject.Find("Deep");
+                    deepObject.GetComponent<ObjectDecorator>().Color = i;
+                    deepObject.localScale = new Vector3(0.2f, 1, 0);
+                }
+            }
+            transform.rotation = Quaternion.Euler(0, 0, GetRotationToCursor(Vector3.zero, aimAction, Camera.main) - 45);
+        } else {
+            transform.rotation = Quaternion.Euler(0, 0, GetRotationToCursor(Vector3.zero, aimAction, Camera.main) - 45);
+            progress1 = Mathf.Lerp(progress1, 1, Time.deltaTime);
+            progress2 = Mathf.Min(progress2 + Time.deltaTime * 1.5f, 1);
+            selectorParent.transform.Rotate(0, 0, (1 - progress1) * 17 + 8 * Time.deltaTime);
+            foreach (Transform selector in selectorParent.transform) {
+                Transform innerObject = selector.Find("Inner");
+                Transform deepObject = innerObject.Find("Deep");
+                deepObject.localScale = new Vector3(Mathf.Max(progress2, deepObject.localScale.x), deepObject.localScale.y, deepObject.localScale.z);
+                innerObject.localPosition = new Vector3((innerObject.localPosition.x - 2) * ((1 - progress2)/30 + 1) + 2, 0, 0);
             }
         }
     }

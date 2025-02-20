@@ -33,7 +33,9 @@ public static class ColorManager {
         return color;
     }
     public static ColorSet GetColor(int id) {
-        if (id >= 0 && id < Colors.Length) {
+        if (id == -1) {
+            return Colors[PlayerPrefs.GetInt("Color", 11)];
+        } else if (id >= 0 && id < Colors.Length) {
             return Colors[id];
         } else {
             return Colors[11];

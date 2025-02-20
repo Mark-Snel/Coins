@@ -384,7 +384,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8404a6a0d4d514031bfd434f59c60e86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: 11
+  color: -1
 --- !u!1 &383821936
 GameObject:
   m_ObjectHideFlags: 0
@@ -754,7 +754,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8404a6a0d4d514031bfd434f59c60e86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: 11
+  color: -1
 --- !u!1 &849380746
 GameObject:
   m_ObjectHideFlags: 0
@@ -899,6 +899,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 519318895114122680, guid: 96757d5e8b3a74c088b9618866e9d907, type: 3}
+      propertyPath: color
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 2469073996992033741, guid: 96757d5e8b3a74c088b9618866e9d907, type: 3}
       propertyPath: m_Name
       value: ColorsButton
@@ -1242,7 +1246,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8404a6a0d4d514031bfd434f59c60e86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: 11
+  color: -1
 --- !u!1 &1594866104
 GameObject:
   m_ObjectHideFlags: 0
@@ -1549,6 +1553,10 @@ PrefabInstance:
       value: Coin
       objectReference: {fileID: 0}
     - target: {fileID: 4405789632974452783, guid: ad3d480ff32549cc5bee6ff1f7151252, type: 3}
+      propertyPath: color
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4405789632974452783, guid: ad3d480ff32549cc5bee6ff1f7151252, type: 3}
       propertyPath: dynamic
       value: 1
       objectReference: {fileID: 0}
@@ -1616,6 +1624,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 519318895114122680, guid: 96757d5e8b3a74c088b9618866e9d907, type: 3}
+      propertyPath: color
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 2469073996992033741, guid: 96757d5e8b3a74c088b9618866e9d907, type: 3}
       propertyPath: m_Name
       value: PlayButton

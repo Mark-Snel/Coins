@@ -65,7 +65,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
                 case MenuAction.Play:
                     break;
                 case MenuAction.Colors:
-                    selectColor();
+                    ColorSelector();
                     break;
                 default:
                     progressY = 0;
@@ -74,7 +74,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
             }
         }
     }
-    void selectColor() {
+    void ColorSelector() {
         if (oins.position.y < oinsEndPosition.y - 0.01) {
             float i = Mathf.Min((Mathf.Max(oins.position.y - oinsStartPosition.y, 0.1f) / oinsDistance) * 25 * Time.deltaTime, 0.4f);
             Vector3 position = Vector3.Lerp(oins.position, oinsEndPosition, i);
@@ -89,11 +89,11 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
             transform.position = newPosition.y < 0.005f ? new Vector3(0, 0, transform.position.z) : newPosition;
             if (transform.position.y == 0) {//Should only work a single frame
                 for (int i = 0; i < 24; i++) {
-                    int groupIndex = i / 3; //Which group this object belongs to
-                    int rowIndex = i % 3;  //Which row within the group
+                    int groupIndex = i / 3;//Which group this object belongs to
+                    int rowIndex = i % 3;//Which row within the group
 
-                    float angle = groupIndex * -45; //Base angle for the group
-                    float radius = (rowIndex) * 0.5f + 2.4f; //Distance from center
+                    float angle = groupIndex * -45;//Base angle for the group
+                    float radius = (rowIndex) * 0.5f + 2.4f;//Distance from center
 
                     Quaternion rotation = Quaternion.Euler(0, 0, angle);
                     GameObject selector = Instantiate(prefab, Vector3.zero, rotation, selectorParent.transform);
@@ -108,14 +108,15 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
         } else {
             transform.rotation = Quaternion.Euler(0, 0, GetRotationToCursor(Vector3.zero, aimAction, Camera.main) - 45);
             progress1 = Mathf.Lerp(progress1, 1, 1 - Mathf.Exp(-Time.deltaTime));
-            selectorParent.transform.Rotate(0, 0, (1 - progress1) * 17 + 8 * Time.deltaTime);
+            selectorParent.transform.Rotate(0, 0, -((1 - progress1) * 17 + 8 * Time.deltaTime));
             foreach (Transform selector in selectorParent.transform) {
-                Transform innerObject = selector.Find("Inner");
-                Transform deepObject = innerObject.Find("Deep");
-                deepObject.localScale = new Vector3(Mathf.Max(Mathf.Min(progress1 * 2f, 1), deepObject.localScale.x), deepObject.localScale.y, deepObject.localScale.z);
                 selector.GetComponent<ColorSelector>().Expand(Mathf.Min(progress1 * 2f, 1));
             }
         }
+    }
+    public void SelectColor() {
+        PlayerPrefs.SetInt("Color", GetComponent<ObjectDecorator>().Color);
+        PlayerPrefs.Save();
     }
 }
 

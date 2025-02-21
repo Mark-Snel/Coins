@@ -119,7 +119,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
             if (!colorSelected) {
                 progress2 = Mathf.Lerp(progress2, 1, 1 - Mathf.Exp(-3 * Time.deltaTime));
             } else {
-                progress2 = Mathf.Max(progress2 - (Mathf.Max(1 - progress2, 0.1f)) * 2 * Time.deltaTime, 0);
+                progress2 = Mathf.Max(progress2 - (Mathf.Max(1 - progress2, 0.2f)) * 2 * Time.deltaTime, 0);
             }
             selectorParent.transform.Rotate(0, 0, -((1 - progress1) * 17 + 8 * Time.deltaTime));
             foreach (Transform selector in selectorParent.transform) {
@@ -131,6 +131,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
         colorSelected = true;
         PlayerPrefs.SetInt("Color", GetComponent<ObjectDecorator>().Color);
         PlayerPrefs.Save();
+        SceneTransition.LoadScene("Main Menu", true);
     }
 }
 

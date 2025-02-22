@@ -11,7 +11,7 @@ public class SceneTransition : MonoBehaviour
     private static bool transitioning = false;
     private static bool fadeTransition = false;
     private static float fadeSpeed = 0.8f;
-    private static float curtainSpeed = 3f;
+    private static float curtainSpeed = 4f;
     private static SpriteRenderer screenSr;
     private static float progress = 0;
 
@@ -21,9 +21,9 @@ public class SceneTransition : MonoBehaviour
             GameObject obj = Resources.Load<GameObject>("Transition/SceneTransition");
             Instance = Instantiate(obj.GetComponent<SceneTransition>());
             DontDestroyOnLoad(Instance);
-            screen = Instance.transform.transform.Find("Screen");
+            screen = Instance.transform.Find("Screen");
             screenSr = screen.GetComponent<SpriteRenderer>();
-            shiny = Instance.transform.transform.Find("Shiny");
+            shiny = Instance.transform.Find("Shiny");
         }
         transitioning = true;
         fadeTransition = fadeToBlack;
@@ -71,6 +71,7 @@ public class SceneTransition : MonoBehaviour
                     transitioning = false;
                     FlipShiny();
                     UpdateSpriteRenderer(transform, false);
+                    Destroy(gameObject);
                 }
             }
         }

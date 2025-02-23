@@ -4,7 +4,7 @@ using static ColorManager;
 public class ObjectDecorator : MonoBehaviour
 {
     public bool dynamic;
-    [SerializeField] private int color;
+    [SerializeField] private int color = 11;
     private bool started = false;
     private float offset;
     private SpriteRenderer primary;

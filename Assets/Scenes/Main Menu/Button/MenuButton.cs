@@ -15,14 +15,18 @@ public class MenuButton : MonoBehaviour
     private float positionSmoothFactor = 25f;
     private InputAction attackAction;
     private MenuCoin coin;
+    private Vector3 nextPosition;
+    private Vector3 nextTextPosition;
 
     void Start() {
         defaultScale = transform.localScale;
         defaultPosition = transform.position;
+        nextPosition = transform.position;
 
         string baseName = gameObject.name.Replace("Button", "");
         text = GameObject.Find(baseName)?.transform;
         defaultTextPosition = text.position;
+        nextTextPosition = text.position;
 
         if (text == null) Debug.LogWarning("No text found for " + baseName);
 
@@ -42,8 +46,12 @@ public class MenuButton : MonoBehaviour
     }
 
     void Update() {
+        transform.position = nextPosition;
+        text.position = nextTextPosition;
         float cameraHeight = Camera.main.orthographicSize * 2f;
         float cameraWidth = cameraHeight * Camera.main.aspect;
+        float offset = Camera.main.transform.GetComponent<MenuScaler>().GetOffset();
+        offset += Camera.main.transform.position.x;
         if (attackAction.WasCompletedThisFrame() && selected && !locked && active) {
             coin.Goto(transform.position.x + transform.localScale.x/2, transform.position.y, action);
             locked = true;
@@ -57,6 +65,11 @@ public class MenuButton : MonoBehaviour
         Vector3 textPosition = Vector3.Lerp(text.position, active ?
         defaultTextPosition
         : new Vector3(defaultTextPosition.x - cameraWidth / 2, defaultTextPosition.y, defaultTextPosition.z), i);
+
+        nextPosition = position;
+        nextTextPosition = textPosition;
+        position.x += offset;
+        textPosition.x += offset;
 
         transform.localScale = scale;
         text.localScale = scale;

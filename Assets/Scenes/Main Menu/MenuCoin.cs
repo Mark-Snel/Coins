@@ -70,6 +70,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
         } else if (progress >= 0.999f) {
             switch (setAction) {
                 case MenuAction.Play:
+                    SceneTransition.LoadScene("Play Menu");
                     break;
                 case MenuAction.Colors:
                     ColorSelector();
@@ -129,8 +130,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
     }
     public void SelectColor() {
         colorSelected = true;
-        PlayerPrefs.SetInt("Color", GetComponent<ObjectDecorator>().Color);
-        PlayerPrefs.Save();
+        ColorManager.SaveColor(GetComponent<ObjectDecorator>().Color);
         SceneTransition.LoadScene("Main Menu", true);
     }
 }

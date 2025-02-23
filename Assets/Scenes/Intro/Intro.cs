@@ -6,6 +6,7 @@ public class Intro : MonoBehaviour
     private SpriteRenderer sr;
     private TextMeshProUGUI topText, oinsText, bottomText, subText;
     private bool transitionStarted = false;
+    private float endPosition = 2.9f;
     private float ticks = 0f;
     private string[] introTexts = {
         "Many, many,", "The majesty of", "Unlimited", "Praise the", "The power of",
@@ -58,7 +59,7 @@ public class Intro : MonoBehaviour
             float scale = 2.192f;
             float rotation = -6f * Mathf.PI;
             float t = (ticks - 40f) / 30f;
-            float x = -2.8f + 2.8f * (Mathf.Pow(1 - t, 3) + 3f * t * Mathf.Pow(1 - t, 2));
+            float x = -endPosition + endPosition * (Mathf.Pow(1 - t, 3) + 3f * t * Mathf.Pow(1 - t, 2));
 
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(x, transform.position.y, transform.position.z);

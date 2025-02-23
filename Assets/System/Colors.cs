@@ -1,6 +1,9 @@
 using UnityEngine;
+using System.Runtime.InteropServices;
+using System;
 
 public static class ColorManager {
+    private static int color = -1;
     public static readonly ColorSet[] Colors = new ColorSet[] {
         new ColorSet(HexToColor("#FF003C"), HexToColor("#A10020")),
         new ColorSet(HexToColor("#FF0200"), HexToColor("#960100")),
@@ -32,14 +35,30 @@ public static class ColorManager {
         ColorUtility.TryParseHtmlString(hex, out Color color);
         return color;
     }
+
     public static ColorSet GetColor(int id) {
         if (id == -1) {
-            return Colors[PlayerPrefs.GetInt("Color", 11)];
+            color = PlayerPrefs.GetInt("color", 11);
+            if (color < 0 || color >= Colors.Length) {
+                color = 11;
+            }
+            return Colors[color];
         } else if (id >= 0 && id < Colors.Length) {
             return Colors[id];
         } else {
             return Colors[11];
         }
+    }
+
+    [DllImport("__Internal")]
+    private static extern void setColor(int color);
+    public static void SaveColor(int id) {
+        color = id;
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        setColor(id);
+        #endif
+        PlayerPrefs.SetInt("color", color);
+        PlayerPrefs.Save();
     }
 }
 

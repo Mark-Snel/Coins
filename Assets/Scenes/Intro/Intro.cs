@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System;
 
 public class Intro : MonoBehaviour
 {
@@ -24,7 +25,7 @@ public class Intro : MonoBehaviour
         oinsText = canvas.transform.Find("Oins").GetComponent<TextMeshProUGUI>();
         bottomText = canvas.transform.Find("Bottom").GetComponent<TextMeshProUGUI>();
         subText = canvas.transform.Find("Sub").GetComponent<TextMeshProUGUI>();
-        topText.text = introTexts[Random.Range(0, introTexts.Length)];
+        topText.text = introTexts[UnityEngine.Random.Range(0, introTexts.Length)];
 
         sr.enabled = true;
     }
@@ -39,12 +40,12 @@ public class Intro : MonoBehaviour
         if (ticks < 37f)
         {
             float scale = Mathf.Max(-0.015f * (ticks - 25f) * (ticks - 65f) + 1f, 1f) / 3;
-            float rotation = 0.01507964473723f * ticks * (ticks - 70.710678118654752f);
-            float x = (rotation + 6f * Mathf.PI) * 0.054f * (transform.localScale.x / 2 + cameraHalfWidth);
+            double rotation = Math.Min(0.01507964473723 * ticks * (ticks - 70.710678118654752), 0);
+            float x = ((float)rotation + 6f * Mathf.PI) * 0.054f * (transform.localScale.x / 2 + cameraHalfWidth);
 
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(x, transform.position.y, transform.position.z);
-            transform.rotation = Quaternion.Euler(0f, 0f, -rotation * Mathf.Rad2Deg);
+            transform.rotation = Quaternion.Euler(0f, 0f, (float)(-rotation * Mathf.Rad2Deg));
         }
         else if (ticks < 40f)
         {

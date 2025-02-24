@@ -10,8 +10,8 @@ public class SceneTransition : MonoBehaviour
     private static string destination = "";
     private static bool transitioning = false;
     private static bool fadeTransition = false;
-    private static float fadeSpeed = 0.8f;
-    private static float curtainSpeed = 4f;
+    private static float fadeSpeed = 1f;
+    private static float curtainSpeed = 3.5f;
     private static SpriteRenderer screenSr;
     private static float progress = 0;
 
@@ -41,7 +41,7 @@ public class SceneTransition : MonoBehaviour
             float cameraWidth = cameraHeight * Camera.main.aspect;
             screen.localScale = new Vector3(cameraWidth, cameraHeight, 1);
             if (!destination.Equals("")) {
-                shiny.localPosition = new Vector3(cameraWidth/2 + 4.5f, shiny.localPosition.y, shiny.localPosition.z);
+                shiny.localPosition = new Vector3(cameraWidth/2 + 4f, shiny.localPosition.y, shiny.localPosition.z);
                 if (fadeTransition) {
                     progress = Mathf.Min(progress + Time.deltaTime * fadeSpeed, 1);
                     screenSr.color = new Color(0, 0, 0, progress);

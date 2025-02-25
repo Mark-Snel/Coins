@@ -33,9 +33,14 @@ public class TextDecorator : MonoBehaviour
         secondary.color = colorSet.Secondary;
     }
 
-    private void OnValidate() {
+    void OnValidate() {
         if (primary) {
             updateColor();
         }
+    }
+
+    public void ChangeText(string newText) {
+        primary.text = newText;
+        secondary.text = newText;
     }
 }

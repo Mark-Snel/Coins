@@ -11,7 +11,7 @@ public class SceneTransition : MonoBehaviour
     private static bool transitioning = false;
     private static bool fadeTransition = false;
     private static float fadeSpeed = 1f;
-    private static float curtainSpeed = 3.5f;
+    private static float curtainSpeed = 2.5f;
     private static SpriteRenderer screenSr;
     private static float progress = 0;
 
@@ -29,7 +29,7 @@ public class SceneTransition : MonoBehaviour
         fadeTransition = fadeToBlack;
         destination = sceneName;
         if (!fadeToBlack) {
-            UpdateSpriteRenderer(Instance.transform, true);
+            UpdateRenderers(Instance.transform, true);
         } else {
             screenSr.enabled = true;
         }
@@ -41,7 +41,7 @@ public class SceneTransition : MonoBehaviour
             float cameraWidth = cameraHeight * Camera.main.aspect;
             screen.localScale = new Vector3(cameraWidth, cameraHeight, 1);
             if (!destination.Equals("")) {
-                shiny.localPosition = new Vector3(cameraWidth/2 + 4f, shiny.localPosition.y, shiny.localPosition.z);
+                shiny.localPosition = new Vector3(cameraWidth/2 + 5.5f, shiny.localPosition.y, shiny.localPosition.z);
                 if (fadeTransition) {
                     progress = Mathf.Min(progress + Time.deltaTime * fadeSpeed, 1);
                     screenSr.color = new Color(0, 0, 0, progress);
@@ -49,7 +49,7 @@ public class SceneTransition : MonoBehaviour
                 } else {
                     progress = Mathf.Min(progress + Time.deltaTime * curtainSpeed, 1);
                     transform.position = Vector3.Lerp(
-                        new Vector3(Camera.main.transform.position.x - cameraWidth - 7.5f, Camera.main.transform.position.y, transform.position.z),
+                        new Vector3(Camera.main.transform.position.x - cameraWidth - 11f, Camera.main.transform.position.y, transform.position.z),
                         new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, transform.position.z),
                         progress
                     );
@@ -58,19 +58,19 @@ public class SceneTransition : MonoBehaviour
                     SceneManager.LoadScene(destination);
                     destination = "";
                     FlipShiny();
-                    UpdateSpriteRenderer(transform, true);
+                    UpdateRenderers(transform, true);
                 }
             } else {
                 progress = Mathf.Max(progress - Time.deltaTime * curtainSpeed, 0);
                 transform.position = Vector3.Lerp(
-                    new Vector3(Camera.main.transform.position.x + cameraWidth + 7.5f, Camera.main.transform.position.y, transform.position.z),
+                    new Vector3(Camera.main.transform.position.x + cameraWidth + 11f, Camera.main.transform.position.y, transform.position.z),
                     new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, transform.position.z),
                     progress
                 );
                 if (progress <= 0) {
                     transitioning = false;
                     FlipShiny();
-                    UpdateSpriteRenderer(transform, false);
+                    UpdateRenderers(transform, false);
                     Destroy(gameObject);
                 }
             }
@@ -81,13 +81,17 @@ public class SceneTransition : MonoBehaviour
         shiny.localPosition = new Vector3(shiny.localPosition.x * -1, shiny.localPosition.y, shiny.localPosition.z);
     }
 
-    static void UpdateSpriteRenderer(Transform obj, bool enabled) {
+    static void UpdateRenderers(Transform obj, bool enabled) {
         SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
+        MeshRenderer mr = obj.GetComponent<MeshRenderer>();
         if (sr != null) {
             sr.enabled = enabled;
         }
+        if (mr != null) {
+            mr.enabled = enabled;
+        }
         foreach (Transform child in obj) {
-            UpdateSpriteRenderer(child, enabled);
+            UpdateRenderers(child, enabled);
         }
     }
 }

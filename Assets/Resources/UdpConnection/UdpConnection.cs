@@ -60,6 +60,7 @@ public class UdpConnection : MonoBehaviour
         while (status == ConnectionStatus.Connected || status == ConnectionStatus.Connecting) {
             yield return new WaitForSeconds(1f);
             if (Time.time - lastMessageTime > timeoutDuration) {
+                Debug.Log("Connection timed out, disconnecting.");
                 Disconnect();
             }
             if (status == ConnectionStatus.Connecting) {
@@ -69,12 +70,10 @@ public class UdpConnection : MonoBehaviour
     }
 
     void Disconnect() {
-        if (status == ConnectionStatus.Connected || status == ConnectionStatus.Connecting) {
-            Debug.Log("Connection timed out, disconnecting.");
-            status = ConnectionStatus.Disconnected;
-            isClosing = true;
-            udpClient.Close();
-        }
+        isClosing = true;
+        SendMessageToServer("disconnecting");
+        status = ConnectionStatus.Disconnected;
+        udpClient.Close();
     }
 
     private void ReceiveData() {
@@ -108,8 +107,7 @@ public class UdpConnection : MonoBehaviour
 
     void OnDestroy() {
         try {
-            isClosing = true;
-            udpClient.Close();
+            Disconnect();
         } catch (Exception ex) {
             Debug.LogError("Error during cleanup: " + ex.Message);
         }

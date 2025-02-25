@@ -10,14 +10,21 @@ const socket = await Bun.udpSocket({
                 clients.set(addr + ":" + port, { addr, port, lastActive: currentTime, ping: null });
                 log(`Client added: ${addr + ":" + port}`);
             }
-            const client = clients.get(addr + ":" + port);
+            const key = addr + ":" + port;
+            const client = clients.get(key);
             client.lastActive = currentTime;
             const message = buf.toString();
-            if (message === "pong") {
-                client.ping = Date.now() - client.lastActive;
-            }
-            if (message === "hello server, it is i, coins client") {
-                socket.send("greetings coins client, a wonderous meeting indeed", port, addr);
+            switch (message) {
+                case "pong":
+                    client.ping = Date.now() - client.lastActive;
+                    break;
+                case "hello server, it is i, coins client":
+                    socket.send("greetings coins client, a wonderous meeting indeed", port, addr);
+                    break;
+                case "disconnecting":
+                    clients.delete(key);
+                    log(`Client ${key} disconnected.`);
+                    break;
             }
         }
     }

@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class Button : MonoBehaviour
 {
+    [SerializeField] private bool clickEffect = true;
     [SerializeField] private string destination;
     private Vector3 defaultScale;
     private Vector3 selectedScale;
@@ -28,8 +29,11 @@ public class Button : MonoBehaviour
     void Update() {
         if (selected && attackAction.WasCompletedThisFrame()) {
             SceneTransition.LoadScene(destination);
+        } else if (selected && attackAction.ReadValue<float>() > 0 && clickEffect) {
+            transform.localScale = defaultScale;
+        } else {
+            transform.localScale = Vector3.Lerp(transform.localScale, selected ? selectedScale : defaultScale, 1 - Mathf.Exp(-scaleSmoothFactor * Time.deltaTime));
         }
-        transform.localScale = Vector3.Lerp(transform.localScale, selected ? selectedScale : defaultScale, 1 - Mathf.Exp(-scaleSmoothFactor * Time.deltaTime));
     }
 
     void OnValidate() {

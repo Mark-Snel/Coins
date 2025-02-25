@@ -25,15 +25,16 @@ public class OnlineButton : MonoBehaviour
 
     void OnInputEndEdit(string text) {
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) {
-            SubmitInput();
+            Submit();
         }
     }
 
-    void SubmitInput() {
+    public void Submit() {
         connectedIp = ipInput.text;
         feedback.ChangeText("Connecting...");
         coinDecorator.Color = -1;
         connecting = true;
+        UdpConnection.Connect(connectedIp);
     }
 
     void FailConnection() {
@@ -51,6 +52,12 @@ public class OnlineButton : MonoBehaviour
 
     void Update() {
         if (connecting) {
+            ConnectionStatus status = UdpConnection.Status;
+            if (status == ConnectionStatus.Disconnected) {
+                FailConnection();
+            } else if (status == ConnectionStatus.Connected) {
+                SucceedConnection();
+            }
             coin.Rotate(0, 0, rotationSpeed * Time.deltaTime);
         }
     }

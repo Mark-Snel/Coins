@@ -16,6 +16,7 @@ public class SceneTransition : MonoBehaviour
     private static float progress = 0;
 
     public static void LoadScene(string sceneName, bool fadeToBlack = false) {
+        if (transitioning) return;
         if (Instance == null)
         {
             GameObject obj = Resources.Load<GameObject>("Transition/SceneTransition");
@@ -56,6 +57,7 @@ public class SceneTransition : MonoBehaviour
                 }
                 if (progress >= 1) {
                     SceneManager.LoadScene(destination);
+                    GameController.Instance?.UpdateMap();
                     destination = "";
                     FlipShiny();
                     UpdateRenderers(transform, true);

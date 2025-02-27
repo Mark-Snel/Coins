@@ -34,7 +34,18 @@ public class OnlineButton : MonoBehaviour
         feedback.ChangeText("Connecting...");
         coinDecorator.Color = -1;
         connecting = true;
-        UdpConnection.Connect(connectedIp);
+        ConnectionManager.Connect(connectedIp);
+        ConnectionManager.SubscribeToStatus(HandleStatusChanged);
+    }
+
+    private void HandleStatusChanged(ConnectionStatus status) {
+        if (status == ConnectionStatus.Disconnected) {
+            FailConnection();
+        } else if (status == ConnectionStatus.Connected) {
+            SucceedConnection();
+        }
+
+        ConnectionManager.UnsubscribeFromStatus(HandleStatusChanged);
     }
 
     void FailConnection() {
@@ -52,12 +63,6 @@ public class OnlineButton : MonoBehaviour
 
     void Update() {
         if (connecting) {
-            ConnectionStatus status = UdpConnection.Status;
-            if (status == ConnectionStatus.Disconnected) {
-                FailConnection();
-            } else if (status == ConnectionStatus.Connected) {
-                SucceedConnection();
-            }
             coin.Rotate(0, 0, rotationSpeed * Time.deltaTime);
         }
     }

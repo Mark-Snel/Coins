@@ -5,7 +5,9 @@ using static ColorManager;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private bool isDead = false;
+    public static PlayerController Instance { get; private set; }
+
+    [SerializeField] private bool isDead = true;
     [SerializeField] private int color = 11;
     [Header("Player Stats")]
     [SerializeField] private float speed = 2f;
@@ -16,10 +18,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float massPerSize = 1f;
     [SerializeField] private float massMultiplier = 1f;
     [SerializeField] private float baseSize = 0.1f;
-    private float edgeSize = 0.04f;
     [SerializeField] private int maxHealth = 100;
     [SerializeField] private float maxHealth_SizeMultiplier = 0.01f;
+    [SerializeField] private int health;
 
+    private float edgeSize = 0.04f;
+
+    public int Color { get { return color; } set {color = value;} }
     public float Speed { get { return speed; } set { speed = value; } }
     public float Acceleration { get { return acceleration; } set { acceleration = value; } }
     public float JumpHeight { get { return jumpHeight; } set { jumpHeight = value; } }
@@ -91,8 +96,21 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+    public int Health {
+        get { return health; }
+        set
+        {
+            if (health != value)
+            {
+                health = value;
+                if (health <= 0) {
+                    IsDead = true;
+                }
+            }
+        }
+    }
 
-    // --- Private Variables ---
+    private static PlayerPacker dataPacker;
     private Rigidbody2D rb;
     private SpriteRenderer sr;
     private Transform ist;
@@ -103,10 +121,26 @@ public class PlayerController : MonoBehaviour
     private InputAction moveAction;
     private int jumpsRemaining; // Tracks how many jumps remain before landing
     private int jumpLengthRemaining; //Ticks remaining for “hold jump” extra force
-    private int health;
     private float size;
 
+    public static PlayerPacker GetDataPacker() {
+        return dataPacker;
+    }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
     void Start() {
+        dataPacker = GetComponent<PlayerPacker>();
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
         ist = transform.Find("InnerSprite"); // Replace with actual name
@@ -125,12 +159,19 @@ public class PlayerController : MonoBehaviour
         cl = GetComponent<CircleCollider2D>();
 
         moveAction = InputSystem.actions.FindAction("Move");
+        if (moveAction == null) {
+            Debug.LogWarning("moveAction not found");
+        }
         jumpAction = InputSystem.actions.FindAction("Jump");
+        if (jumpAction == null) {
+            Debug.LogWarning("jumpAction not found");
+        }
 
         health = maxHealth;
         UpdateSizeAndMass();
         UpdateColor();
-        jumpsRemaining = MaxJumps;
+        jumpsRemaining = maxJumps;
+        ProcessDeath();
     }
 
     void Update() {
@@ -164,7 +205,7 @@ public class PlayerController : MonoBehaviour
             jumpsRemaining--;
             jumpLengthRemaining = jumpLength;
         }
-        // Else, if the player is still holding jump and we have “hold time” remaining, apply extra upward force.
+        //Else, if the player is still holding jump and we have “hold time” remaining, apply extra upward force.
         if (jumpLengthRemaining > 0 && jumpState == KeyState.Held)
         {
             float holdForce = Mathf.Sqrt(jumpHeight) * 2f * rb.mass;
@@ -179,7 +220,7 @@ public class PlayerController : MonoBehaviour
             float angle = Vector2.Angle(normal, Vector2.up); //Angle between normal and "up" (0° is perfectly flat ground)
 
             if (angle <= 45f) { //Allow jumps only if the slope is <= 45 degrees
-                jumpsRemaining = MaxJumps;
+                jumpsRemaining = maxJumps;
                 jumpLengthRemaining = 0;
                 break;
             }

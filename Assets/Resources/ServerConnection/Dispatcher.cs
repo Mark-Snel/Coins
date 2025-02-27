@@ -1,12 +1,19 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Dispatcher : MonoBehaviour {
     private static readonly Queue<Action> executionQueue = new Queue<Action>();
     private static Dispatcher instance;
+    public static event Action OnFixedUpdate;
 
-    public static void Instantiate() {
+    public static void StartCoro(Func<IEnumerator> action) {
+        Create();
+        instance.StartCoroutine(action.Invoke());
+    }
+
+    public static void Create() {
         if (instance == null) {
             var obj = new GameObject("Dispatcher");
             instance = obj.AddComponent<Dispatcher>();
@@ -25,6 +32,10 @@ public class Dispatcher : MonoBehaviour {
         }
     }
 
+    public static void ClearFixedUpdate() {
+        OnFixedUpdate = null;
+    }
+
     void Update() {
         while (executionQueue.Count > 0) {
             Action action;
@@ -33,5 +44,9 @@ public class Dispatcher : MonoBehaviour {
             }
             action?.Invoke();
         }
+    }
+
+    void FixedUpdate() {
+        OnFixedUpdate?.Invoke();
     }
 }

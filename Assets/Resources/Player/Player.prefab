@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 642448353200037183}
   - component: {fileID: 6969828422697649412}
   - component: {fileID: 836430132830683311}
+  - component: {fileID: 6482820181535343876}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -111,7 +112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76ea7b79bac733b65894703d81aa0c43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDead: 0
+  isDead: 1
   color: 11
   speed: 3
   acceleration: 5
@@ -123,6 +124,7 @@ MonoBehaviour:
   baseSize: 0.1
   maxHealth: 100
   maxHealth_SizeMultiplier: 0.01
+  health: 0
 --- !u!212 &836430132830683311
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -178,6 +180,18 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &6482820181535343876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1593467337267644523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b80335d5c30e7330ea07f1e610e197d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1966462683961514931
 GameObject:
   m_ObjectHideFlags: 0

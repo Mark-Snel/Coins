@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 657466794648886792}
   - component: {fileID: 642448353200037183}
   - component: {fileID: 836430132830683311}
+  - component: {fileID: 6155990743089934390}
   m_Layer: 0
   m_Name: ExternalPlayer
   m_TagString: ExternalPlayer
@@ -153,6 +154,27 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &6155990743089934390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1593467337267644523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34e7da01111eeeace98d225276481d7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isDead: 1
+  color: 11
+  massPerSize: 1
+  massMultiplier: 1
+  baseSize: 0.1
+  maxHealth: 100
+  maxHealth_SizeMultiplier: 0.01
+  health: 0
+  playerId: 0
 --- !u!1 &1966462683961514931
 GameObject:
   m_ObjectHideFlags: 0

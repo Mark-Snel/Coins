@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 
 public class GameController : MonoBehaviour
 {
+    public static byte playerId;
     public static GameController Instance { get; private set; }
 
     private static Dictionary<int, ExternalPlayerController> externalPlayers = new Dictionary<int, ExternalPlayerController>();
@@ -70,6 +71,8 @@ public class GameController : MonoBehaviour
         ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(data);
 
         //parsing received data
+        int id = span[index + 45];
+        if ((byte)id == playerId) return;
         bool isDead = span[index] != 0; index += 1;
         int color = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
         int health = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
@@ -84,8 +87,7 @@ public class GameController : MonoBehaviour
         float velX = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
         float velY = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
         Vector2 velocity = new Vector2(velX, velY);
-        int id = span[index];
-        index += 1;
+
 
         ExternalPlayerController player;
         if (!externalPlayers.TryGetValue(id, out player)) {

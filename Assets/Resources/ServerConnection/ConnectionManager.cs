@@ -3,6 +3,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+/*Client sent packets:
+ 0 *= pong
+ 1 = connect
+ 2 = disconnect
+ 3 = playerdata
+ */
+/*Server sent packets:
+ 0 *= ping
+ 1 = connect response
+ 2 = current map
+ 3 = playerdata
+ 4 = playerId
+ */
+
 public class ConnectionManager {
     private static IConnection connection;
     static ConnectionManager() {
@@ -64,6 +78,11 @@ public class ConnectionManager {
             int playerDataIndex = index;
             Dispatcher.Enqueue(() => GameController.ExternalPlayer(data, playerDataIndex));
             index += 46;
+            continueDeserializing(data, index);
+        },
+        (byte[] data, int index) => {//playerId
+            GameController.playerId = data[index];
+            index++;
             continueDeserializing(data, index);
         }
     };

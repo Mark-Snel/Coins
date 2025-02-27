@@ -3,8 +3,6 @@ using static ColorManager;
 
 public class ExternalPlayerController : MonoBehaviour
 {
-    public static PlayerController Instance { get; private set; }
-
     [SerializeField] private bool isDead = true;
     [SerializeField] private int color = 11;
     [Header("Player Stats")]
@@ -137,19 +135,21 @@ public class ExternalPlayerController : MonoBehaviour
     }
 
     private void ProcessDeath() {
-        if (isDead) {
-            rb.linearVelocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-            rb.simulated = false;
-            cl.enabled = false;
-            sr.enabled = false;
-            isr.enabled = false;
-        } else {
-            health = MaxHealth;
-            rb.simulated = true;
-            cl.enabled = true;
-            sr.enabled = true;
-            isr.enabled = true;
+        if (rb) {
+            if (isDead) {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+                rb.simulated = false;
+                cl.enabled = false;
+                sr.enabled = false;
+                isr.enabled = false;
+            } else {
+                health = MaxHealth;
+                rb.simulated = true;
+                cl.enabled = true;
+                sr.enabled = true;
+                isr.enabled = true;
+            }
         }
     }
 

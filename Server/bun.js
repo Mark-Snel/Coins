@@ -154,7 +154,8 @@ setInterval(() => {
         packet = Buffer.concat([packet, playerPacket]);
     });
     clients.forEach((client) => {
-        client.send(packet);
+        const clientSpecificPacket = Buffer.concat([packet, Buffer.from([4, client.playerId])]);
+        client.send(clientSpecificPacket);
     });
 }, 20);
 

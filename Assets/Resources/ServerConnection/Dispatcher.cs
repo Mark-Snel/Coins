@@ -7,6 +7,7 @@ public class Dispatcher : MonoBehaviour {
     private static readonly Queue<Action> executionQueue = new Queue<Action>();
     private static Dispatcher instance;
     public static event Action OnFixedUpdate;
+    public static event Action OnUpdate;
 
     public static void StartCoro(Func<IEnumerator> action) {
         Create();
@@ -22,11 +23,6 @@ public class Dispatcher : MonoBehaviour {
     }
 
     public static void Enqueue(Action action) {
-        if (instance == null) {
-            var obj = new GameObject("Dispatcher");
-            instance = obj.AddComponent<Dispatcher>();
-            DontDestroyOnLoad(obj);
-        }
         lock (executionQueue) {
             executionQueue.Enqueue(action);
         }
@@ -37,6 +33,7 @@ public class Dispatcher : MonoBehaviour {
     }
 
     void Update() {
+        OnUpdate?.Invoke();
         while (executionQueue.Count > 0) {
             Action action;
             lock (executionQueue) {

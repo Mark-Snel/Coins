@@ -140,6 +140,7 @@ public class PlayerController : MonoBehaviour
     }
 
     void Start() {
+        Application.runInBackground = true;
         dataPacker = GetComponent<PlayerPacker>();
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();

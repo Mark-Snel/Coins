@@ -134,6 +134,10 @@ public class ExternalPlayerController : MonoBehaviour
         rb.mass = massPerSize * size * size * massMultiplier;
     }
 
+    private void FixedUpdate() {
+        rb.AddForce(appliedForce);
+    }
+
     private void ProcessDeath() {
         if (rb) {
             if (isDead) {
@@ -159,5 +163,29 @@ public class ExternalPlayerController : MonoBehaviour
             UpdateColor();
             ProcessDeath();
         }
+    }
+
+    public void UpdateVelocity(Vector2 velocity) {
+        if (rb) {
+            rb.linearVelocity = velocity;
+        }
+    }
+
+    public void UpdatePosition(Vector2 position) {
+        if (rb) {
+            rb.MovePosition(position);
+        }
+    }
+
+
+    private Vector2 appliedForce = Vector2.zero;
+    public void UpdateForce(Vector2 force) {
+        if (rb) {
+            appliedForce = force;
+        }
+    }
+
+    public void Delete() {
+        Destroy(gameObject);
     }
 }

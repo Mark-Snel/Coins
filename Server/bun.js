@@ -8,9 +8,13 @@ const Maps = Object.freeze({
 let currentMap = Maps.LOBBY;
 let nextMap = Maps.LOBBY;
 
-let nextPlayerId = 0;
+let availablePlayerIds = [];
+for (let i = 0; i < 256; i++) {
+    availablePlayerIds.push(i);
+}
 let nextWSId = 0;
 const players = new Map();
+let playerIdsPacket = Buffer.from([5, 0]);
 const clients = new Map();
 
 // --- UDP Server Setup ---
@@ -53,12 +57,30 @@ log(`UDP server running on port: ${udpSocket.port}`);
 // --- WebSocket Server Setup ---
 const wsSocket =Bun.serve({
     port: 1071,
-    fetch(req, server) {
-        // Attempt to upgrade the request to a WebSocket.
+    async fetch(req, server) {
+        // Attempt to upgrade to WebSocket
         if (server.upgrade(req)) {
-            return; // Connection upgraded, no response needed.
+            return;
         }
-        return new Response("WebSocket upgrade failed", { status: 500 });
+
+        // Serve static files from the ./Build/ directory
+        const url = new URL(req.url);
+        let filePath = `./Build${url.pathname}`;
+
+        // If requesting the root, serve index.html
+        if (url.pathname === "/") {
+            filePath = "./Build/index.html";
+        }
+
+        try {
+            const file = Bun.file(filePath);
+            if (!(await file.exists())) {
+                return new Response("404 Not Found", { status: 404 });
+            }
+            return new Response(file);
+        } catch (err) {
+            return new Response("Internal Server Error", { status: 500 });
+        }
     },
     websocket: {
         open(ws) {
@@ -146,7 +168,7 @@ setInterval(() => {
 
 // Send map and player data periodically.
 setInterval(() => {
-    let packet = Buffer.from([2, currentMap]);
+    let packet = Buffer.concat([Buffer.from([2, currentMap]), playerIdsPacket]);
     players.forEach((buffer, playerId) => {
         const prefix = Buffer.from([3]);
         const playerIdBuffer = Buffer.from([playerId]);
@@ -234,10 +256,12 @@ const Deserialize = [
     // 3 = playerdata
     (client, remainingData) => {
         if (client.playerId == null) {
-            client.playerId = nextPlayerId;
-            nextPlayerId++;
+            client.playerId = availablePlayerIds.shift();
+            players.set(client.playerId, remainingData);
+            playersUpdated();
+        } else {
+            players.set(client.playerId, remainingData);
         }
-        players.set(client.playerId, remainingData);
     }
 ];
 
@@ -252,6 +276,8 @@ function deleteClient(key) {
     if (client) {
         if (client.playerId != null) {
             players.delete(client.playerId);
+            availablePlayerIds.unshift(client.playerId);
+            playersUpdated();
         }
         // If it's a WebSocket client, close its connection.
         if (client.type === "ws" && client.ws.readyState === WebSocket.OPEN) {
@@ -259,4 +285,13 @@ function deleteClient(key) {
         }
         clients.delete(key);
     }
+}
+
+
+function playersUpdated() {
+    const playerIds = [];
+    players.forEach((buffer, playerId) => {
+        playerIds.push(playerId);
+    });
+    playerIdsPacket = Buffer.from([5, playerIds.length, ...playerIds]);
 }

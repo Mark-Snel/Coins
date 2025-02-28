@@ -1,6 +1,7 @@
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
+using TMPro;
+using System;
 
 public class OnlineButton : MonoBehaviour
 {
@@ -19,8 +20,19 @@ public class OnlineButton : MonoBehaviour
         ipInput = transform.Find("IpInput").GetComponent<TMP_InputField>();
         ipInput.onEndEdit.AddListener(OnInputEndEdit);
 
-        string previousIp = PlayerPrefs.GetString("ip", "");
-        ipInput.text = previousIp;
+        string hostAndPort = "";
+
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        string fullUrl = Application.absoluteURL;
+        hostAndPort = GetHostAndPort(fullUrl);
+        #endif
+
+        if (string.IsNullOrEmpty(hostAndPort))
+        {
+            hostAndPort = PlayerPrefs.GetString("ip", "");
+        }
+
+        ipInput.text = hostAndPort;
     }
 
     void OnInputEndEdit(string text) {
@@ -64,6 +76,16 @@ public class OnlineButton : MonoBehaviour
     void Update() {
         if (connecting) {
             coin.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    string GetHostAndPort(string url) {
+        try {
+            Uri uri = new Uri(url);
+            return uri.Authority; // Returns "123.123.123.123:1234" or "example.com:8080"
+        } catch (Exception e) {
+            Debug.LogError("Invalid URL: " + e.Message);
+            return "";
         }
     }
 }

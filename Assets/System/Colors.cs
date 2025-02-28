@@ -50,6 +50,14 @@ public static class ColorManager {
         }
     }
 
+    public static int GetColor() {
+        color = PlayerPrefs.GetInt("color", 11);
+        if (color < 0 || color >= Colors.Length) {
+            color = 11;
+        }
+        return color;
+    }
+
     [DllImport("__Internal")]
     private static extern void setColor(int color);
     public static void SaveColor(int id) {

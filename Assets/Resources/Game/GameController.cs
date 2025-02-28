@@ -9,7 +9,7 @@ public class GameController : MonoBehaviour
     public static byte playerId;
     public static GameController Instance { get; private set; }
 
-    private static Dictionary<int, ExternalPlayerController> externalPlayers = new Dictionary<int, ExternalPlayerController>();
+    private static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
 
     private CoinsMap nextMap = CoinsMap.None;
     private CoinsMap currentMap = CoinsMap.None;
@@ -71,8 +71,8 @@ public class GameController : MonoBehaviour
         ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(data);
 
         //parsing received data
-        int id = span[index + 45];
-        if ((byte)id == playerId) return;
+        byte id = span[index + 53];
+        if (id == playerId) return;
         bool isDead = span[index] != 0; index += 1;
         int color = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
         int health = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
@@ -87,6 +87,9 @@ public class GameController : MonoBehaviour
         float velX = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
         float velY = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
         Vector2 velocity = new Vector2(velX, velY);
+        float forceX = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
+        float forceY = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
+        Vector2 force = new Vector2(forceX, forceY);
 
 
         ExternalPlayerController player;
@@ -101,6 +104,7 @@ public class GameController : MonoBehaviour
             player = newPlayer.GetComponent<ExternalPlayerController>();
             player.playerId = id;
             externalPlayers.Add(id, player);
+            player.transform.position = new Vector3(position.x, position.y, player.transform.position.z);
         }
 
         // Update the player's properties using available public setters.
@@ -114,11 +118,35 @@ public class GameController : MonoBehaviour
         player.Color = color;
 
         // Update position and velocity.
-        player.transform.position = position;
-        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.linearVelocity = velocity;
+        player.UpdatePosition(position);
+        player.UpdateVelocity(velocity);
+        player.UpdateForce(force);
+    }
+
+    public static void CheckPlayers(byte[] data, int index, byte count) {
+
+        bool[] receivedIds = new bool[256];
+
+        for (int i = 0; i < count; i++) {
+            receivedIds[data[index + i]] = true;
+        }
+
+        List<byte> keysToRemove = null;
+        foreach (var kvp in externalPlayers) {
+            if (!receivedIds[kvp.Key]) {
+                if (keysToRemove == null)
+                    keysToRemove = new List<byte>();
+                keysToRemove.Add(kvp.Key);
+            }
+        }
+        if (keysToRemove != null) {
+            foreach (byte key in keysToRemove) {
+                if (externalPlayers.TryGetValue(key, out ExternalPlayerController player)) {
+                    Dispatcher.Enqueue(() => player.Delete());
+                }
+                Debug.Log("Removed player " + key);
+                externalPlayers.Remove(key);
+            }
         }
     }
 }

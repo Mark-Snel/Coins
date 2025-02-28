@@ -20,27 +20,29 @@ public class PlayerPacker : MonoBehaviour
         if (player == null)
             Debug.LogError("PlayerStats component is missing!");
     }
-    public void GetPacket(List<byte> packet)
-    {
-        //Packet structure:
-        //1 byte  - bool isDead
-        //4 bytes - int color
-        //4 bytes - int health
-        //4 bytes - float massPerSize
-        //4 bytes - float massMultiplier
-        //4 bytes - float baseSize
-        //4 bytes - int maxHealth
-        //4 bytes - float maxHealth_SizeMultiplier
-        //8 bytes - Vector2 position (x, y)
-        //8 bytes - Vector2 velocity (x, y)
-        //
-        //Total = 1 + 7*4 + 8 + 8 = 45 bytes
-        //Also identifier, so +1 = 46 bytes
 
-        //On server theres also (added to the back):
-        //1 byte - int id
-        //Which would be 47 bytes received
+    //Packet structure:
+    //1 byte  - bool isDead
+    //4 bytes - int color
+    //4 bytes - int health
+    //4 bytes - float massPerSize
+    //4 bytes - float massMultiplier
+    //4 bytes - float baseSize
+    //4 bytes - int maxHealth
+    //4 bytes - float maxHealth_SizeMultiplier
+    //8 bytes - Vector2 position (x, y)
+    //8 bytes - Vector2 velocity (x, y)
+    //8 bytes - Vector2 force (x, y)
 
+    //Total = 1 + 7*4 + 8*3 = 53 bytes
+    //Also identifier, so +1 = 54 bytes
+
+    //On server theres also (added to the back):
+    //1 byte - byte id
+    //Which would be 54 bytes received (without identifier)
+    public static int PacketLength { get; private set; } = 54;
+
+    public void GetPacket(List<byte> packet) {
         //Identifier
         packet.Add(3); //Look at UdpConnection, explains each identifier
 
@@ -75,5 +77,9 @@ public class PlayerPacker : MonoBehaviour
         //Pack Rigidbody2D velocity (Vector2: x and y)
         packet.AddRange(BitConverter.GetBytes(rb.linearVelocity.x));
         packet.AddRange(BitConverter.GetBytes(rb.linearVelocity.y));
+
+        Vector2 force = player.GetForce();
+        packet.AddRange(BitConverter.GetBytes(force.x));
+        packet.AddRange(BitConverter.GetBytes(force.y));
     }
 }

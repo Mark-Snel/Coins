@@ -15,6 +15,7 @@ using System.Collections.Generic;
  2 = current map
  3 = playerdata
  4 = playerId
+ 5 = playerIdList
  */
 
 public class ConnectionManager {
@@ -24,7 +25,15 @@ public class ConnectionManager {
     }
 
     public static void Connect(string address) {
-        connection = new WebSocketConnection();
+        if (connection != null) {
+            connection.Disconnect();
+        }
+        #if UNITY_WEBGL && !UNITY_EDITOR
+            connection = new WebSocketConnection();
+        #else
+            connection = new UdpConnection();
+        #endif
+        Debug.Log("Using connection type: " + connection.GetType().Name);
         connection.OnDataReceived += (byte[] receivedData) => {
             byte packetType = receivedData[0];
 
@@ -77,12 +86,19 @@ public class ConnectionManager {
         (byte[] data, int index) => {//playerdata
             int playerDataIndex = index;
             Dispatcher.Enqueue(() => GameController.ExternalPlayer(data, playerDataIndex));
-            index += 46;
+            index += PlayerPacker.PacketLength;
             continueDeserializing(data, index);
         },
         (byte[] data, int index) => {//playerId
             GameController.playerId = data[index];
             index++;
+            continueDeserializing(data, index);
+        },
+        (byte[] data, int index) => {//playerIdsList
+            byte length = data[index++];
+            int playerListIndex = index;
+            GameController.CheckPlayers(data, playerListIndex, length);
+            index += length;
             continueDeserializing(data, index);
         }
     };

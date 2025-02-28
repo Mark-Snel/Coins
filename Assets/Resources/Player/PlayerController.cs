@@ -170,6 +170,7 @@ public class PlayerController : MonoBehaviour
 
         health = maxHealth;
         UpdateSizeAndMass();
+        Color = ColorManager.GetColor();
         UpdateColor();
         jumpsRemaining = maxJumps;
         ProcessDeath();
@@ -206,7 +207,7 @@ public class PlayerController : MonoBehaviour
             jumpsRemaining--;
             jumpLengthRemaining = jumpLength;
         }
-        //Else, if the player is still holding jump and we have “hold time” remaining, apply extra upward force.
+        //if the player is still holding jump and we have “hold time” remaining, apply extra upward force.
         if (jumpLengthRemaining > 0 && jumpState == KeyState.Held)
         {
             float holdForce = Mathf.Sqrt(jumpHeight) * 2f * rb.mass;
@@ -236,14 +237,14 @@ public class PlayerController : MonoBehaviour
             float forceLeft1 = Mathf.Max(currentVelocityX * -2f + input * speed * 2f, input * acceleration);
             float forceLeft2 = Mathf.Max(currentVelocityX * -acceleration + input * acceleration, input * 2f * acceleration);
             float computedForceX = Mathf.Min(Mathf.Min(forceLeft1, forceLeft2), 0f);
-            rb.AddForce(new Vector2(computedForceX * rb.mass, 0f));
+            ApplyForce(new Vector2(computedForceX * rb.mass, 0f));
         }
 
         if (input > 0) {
             float forceRight1 = Mathf.Min(currentVelocityX * -2f + input * speed * 2f, input * acceleration);
             float forceRight2 = Mathf.Min(currentVelocityX * -acceleration + input * acceleration, input * 2f * acceleration);
             float computedForceX = Mathf.Max(Mathf.Max(forceRight1, forceRight2), 0f);
-            rb.AddForce(new Vector2(computedForceX * rb.mass, 0f));
+            ApplyForce(new Vector2(computedForceX * rb.mass, 0f));
         }
     }
 
@@ -285,5 +286,17 @@ public class PlayerController : MonoBehaviour
             UpdateColor();
             ProcessDeath();
         }
+    }
+
+    private Vector2 totalForce = Vector2.zero;
+    private void ApplyForce(Vector2 force) {
+        rb.AddForce(force);
+        totalForce += force;
+    }
+
+    public Vector2 GetForce() {
+        Vector2 returnForce = totalForce;
+        totalForce = Vector2.zero;
+        return returnForce;
     }
 }

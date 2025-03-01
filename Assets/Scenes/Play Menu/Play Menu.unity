@@ -2342,7 +2342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 834aa41cda34582eebe663ae1dd25a36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clickEffect: 0
+  clickEffect: 1
   destination: 
   selectedScaleAdditive: {x: 0.5, y: 0.5}
   scaleSmoothFactor: 20

@@ -243,6 +243,9 @@ const Deserialize = [
         const expectedData = Buffer.from([2, 0, 4, 4, 0, 1, 0, 2, 7, 1, 0, 7, 0]);
         if (remainingData.equals(expectedData)) {
             client.send(Buffer.from([1]));
+            if (client.playerId === null) {
+                client.playerId = availablePlayerIds.shift();
+            }
         }
     },
     // 2 = disconnect
@@ -255,8 +258,10 @@ const Deserialize = [
     },
     // 3 = playerdata
     (client, remainingData) => {
-        if (client.playerId == null) {
+        if (client.playerId === null) {
             client.playerId = availablePlayerIds.shift();
+        }
+        if (!players.has(client.playerId)) {
             players.set(client.playerId, remainingData);
             playersUpdated();
         } else {
@@ -274,10 +279,12 @@ async function log(message) {
 function deleteClient(key) {
     const client = clients.get(key);
     if (client) {
-        if (client.playerId != null) {
-            players.delete(client.playerId);
+        if (client.playerId !== null) {
+            if (players.has(client.playerId)) {
+                players.delete(client.playerId);
+                playersUpdated();
+            }
             availablePlayerIds.unshift(client.playerId);
-            playersUpdated();
         }
         // If it's a WebSocket client, close its connection.
         if (client.type === "ws" && client.ws.readyState === WebSocket.OPEN) {

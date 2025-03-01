@@ -12,6 +12,7 @@ public class ExternalPlayerController : MonoBehaviour
     [SerializeField] private int maxHealth = 100;
     [SerializeField] private float maxHealth_SizeMultiplier = 0.01f;
     [SerializeField] private int health;
+    [SerializeField] private float interpolationFactor = 0.2f;
     public int playerId;
 
     private float edgeSize = 0.04f;
@@ -108,8 +109,7 @@ public class ExternalPlayerController : MonoBehaviour
             if (isr == null) {
                 Debug.LogError("Invalid InnerSprite in player");
             }
-        }
-        else {
+        } else {
             Debug.LogError("InnerSprite not found");
         }
         cl = GetComponent<CircleCollider2D>();
@@ -121,8 +121,10 @@ public class ExternalPlayerController : MonoBehaviour
     }
 
     private void UpdateColor() {
-        sr.color = GetColor(color).Secondary;
-        isr.color = GetColor(color).Primary;
+        if (sr) {
+            sr.color = GetColor(color).Secondary;
+            isr.color = GetColor(color).Primary;
+        }
     }
 
     private void UpdateSizeAndMass() {
@@ -134,7 +136,12 @@ public class ExternalPlayerController : MonoBehaviour
         rb.mass = massPerSize * size * size * massMultiplier;
     }
 
+    private Vector2 velocity = Vector2.zero;
     private void FixedUpdate() {
+        if (targetPosition != null) {
+            Vector2 smoothPosition = Vector2.SmoothDamp(rb.position, targetPosition, ref velocity, interpolationFactor);
+            rb.position = smoothPosition;
+        }
         rb.AddForce(appliedForce);
     }
 
@@ -171,10 +178,9 @@ public class ExternalPlayerController : MonoBehaviour
         }
     }
 
+    private Vector2 targetPosition;
     public void UpdatePosition(Vector2 position) {
-        if (rb) {
-            rb.MovePosition(position);
-        }
+        targetPosition = position;
     }
 
 

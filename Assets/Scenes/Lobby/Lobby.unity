@@ -1600,7 +1600,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7204145257206577875, guid: ee1d8bb081d18cbe487e45d2090e5fa5, type: 3}
       propertyPath: MapSize.x
-      value: 11
+      value: 9.3
       objectReference: {fileID: 0}
     - target: {fileID: 7204145257206577875, guid: ee1d8bb081d18cbe487e45d2090e5fa5, type: 3}
       propertyPath: MapSize.y

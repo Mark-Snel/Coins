@@ -54,7 +54,11 @@ public class ConnectionManager {
                 connection.Send(finalPacket);
             }
         };
-        connection.Connect(address);
+        try {
+            connection.Connect(address);
+        } catch {
+            connection.Disconnect();
+        }
     }
 
     public static void SubscribeToStatus(Action<ConnectionStatus> handler) {
@@ -85,7 +89,7 @@ public class ConnectionManager {
         },
         (byte[] data, int index) => {//playerdata
             int playerDataIndex = index;
-            Dispatcher.Enqueue(() => GameController.ExternalPlayer(data, playerDataIndex));
+            Dispatcher.MainNow(_ => GameController.ExternalPlayer(data, playerDataIndex));
             index += PlayerPacker.PacketLength;
             continueDeserializing(data, index);
         },

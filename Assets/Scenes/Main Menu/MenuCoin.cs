@@ -122,7 +122,7 @@ public class MenuCoin : MonoBehaviour//Very jank, i know, why are you here anywa
             } else {
                 progress2 = Mathf.Max(progress2 - (Mathf.Max(1 - progress2, 0.2f)) * 2 * Time.deltaTime, 0);
             }
-            selectorParent.transform.Rotate(0, 0, -((1 - progress1) * 17 + 8 * Time.deltaTime));
+            selectorParent.transform.Rotate(0, 0, -(((1 - progress1) * 2040 * Time.deltaTime) + (5 * Time.deltaTime)));
             foreach (Transform selector in selectorParent.transform) {
                 selector.GetComponent<ColorSelector>().Expand(Mathf.Min(progress2, 1));
             }

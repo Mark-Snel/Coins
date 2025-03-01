@@ -7,7 +7,7 @@ public class Intro : MonoBehaviour
     private SpriteRenderer sr;
     private TextMeshProUGUI topText, oinsText, bottomText, subText;
     private bool transitionStarted = false;
-    private float endPosition = 2.9f;
+    private float endPosition = 2.7f;
     private float ticks = 0f;
     private string[] introTexts = {
         "Many, many,", "The majesty of", "Unlimited", "Praise the", "The power of",
@@ -17,6 +17,7 @@ public class Intro : MonoBehaviour
 
     void Start()
     {
+        Application.runInBackground = true;
         sr = transform.Find("Circle").GetComponent<SpriteRenderer>();
 
         // Finding TextMeshProUGUI elements inside the Canvas
@@ -35,36 +36,37 @@ public class Intro : MonoBehaviour
         float cameraHalfHeight = Camera.main.orthographicSize;
         float cameraHalfWidth = cameraHalfHeight * Camera.main.aspect;
         ticks += Time.deltaTime * 40;
+        double rotation = 0;
 
         //C movement
         if (ticks < 37f)
         {
             float scale = Mathf.Max(-0.015f * (ticks - 25f) * (ticks - 65f) + 1f, 1f) / 3;
-            double rotation = Math.Min(0.01507964473723 * ticks * (ticks - 70.710678118654752), 0);
+            rotation = Math.Min(0.01507964473723 * ticks * (ticks - 70.710678118654752), rotation);
             float x = ((float)rotation + 6f * Mathf.PI) * 0.054f * (transform.localScale.x / 2 + cameraHalfWidth);
 
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
-            transform.position = new Vector3(x, transform.position.y, transform.position.z);
+            transform.position = new Vector3(x, 0, transform.position.z);
             transform.rotation = Quaternion.Euler(0f, 0f, (float)(-rotation * Mathf.Rad2Deg));
         }
         else if (ticks < 40f)
         {
             float scale = Mathf.Max(-0.015f * (ticks - 25f) * (ticks - 65f) + 1f, 1f) / 3;
-            float rotation = -6f * Mathf.PI;
+            rotation = -6f * Mathf.PI;
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(0f, transform.position.y, transform.position.z);
-            transform.rotation = Quaternion.Euler(0f, 0f, rotation * Mathf.Rad2Deg);
+            transform.rotation = Quaternion.Euler(0f, 0f, (float)(rotation * Mathf.Rad2Deg));
         }
         else if (ticks < 70f)
         {
             float scale = 2.192f;
-            float rotation = -6f * Mathf.PI;
+            rotation = -6f * Mathf.PI;
             float t = (ticks - 40f) / 30f;
             float x = -endPosition + endPosition * (Mathf.Pow(1 - t, 3) + 3f * t * Mathf.Pow(1 - t, 2));
 
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(x, transform.position.y, transform.position.z);
-            transform.rotation = Quaternion.Euler(0f, 0f, rotation * Mathf.Rad2Deg);
+            transform.rotation = Quaternion.Euler(0f, 0f, (float)(rotation * Mathf.Rad2Deg));
         }
 
         //Text opacity

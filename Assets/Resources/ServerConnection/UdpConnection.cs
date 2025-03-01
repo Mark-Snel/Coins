@@ -47,13 +47,12 @@ public class UdpConnection : IConnection {
         isClosing = true;
         SendDisconnectMessage();
         Status = ConnectionStatus.Disconnected;
-        OnStatusChanged?.Invoke(Status);
+        Dispatcher.Enqueue(() => {OnStatusChanged?.Invoke(Status);});
         udpClient?.Close();
     }
 
     public void Send(byte[] data) {
-        if (udpClient != null && serverEndPoint != null)
-        {
+        if (udpClient != null && serverEndPoint != null) {
             udpClient.Send(data, data.Length, serverEndPoint);
         }
     }

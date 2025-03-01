@@ -1,13 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class Dispatcher : MonoBehaviour {
+    private static SynchronizationContext unityContext;
     private static readonly Queue<Action> executionQueue = new Queue<Action>();
     private static Dispatcher instance;
     public static event Action OnFixedUpdate;
     public static event Action OnUpdate;
+
+    void Awake() {
+        unityContext = SynchronizationContext.Current;
+    }
 
     public static void StartCoro(Func<IEnumerator> action) {
         Create();
@@ -19,6 +25,14 @@ public class Dispatcher : MonoBehaviour {
             var obj = new GameObject("Dispatcher");
             instance = obj.AddComponent<Dispatcher>();
             DontDestroyOnLoad(obj);
+        }
+    }
+
+    public static void MainNow(SendOrPostCallback callback, object state = null) {
+        if (Thread.CurrentThread.ManagedThreadId == 1) {
+            callback(state); // Already on main thread
+        } else {
+            unityContext.Send(callback, state);
         }
     }
 

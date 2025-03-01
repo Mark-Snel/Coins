@@ -6,13 +6,13 @@ using System.Runtime.InteropServices;
 
 public class GameController : MonoBehaviour
 {
-    public static byte playerId;
+    public static byte? playerId  = null;
     public static GameController Instance { get; private set; }
 
     private static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
 
-    private CoinsMap nextMap = CoinsMap.None;
-    private CoinsMap currentMap = CoinsMap.None;
+    private static CoinsMap nextMap = CoinsMap.None;
+    private static CoinsMap currentMap = CoinsMap.None;
     private GameObject player;
     private GameObject[] respawnPoints;
 
@@ -38,18 +38,15 @@ public class GameController : MonoBehaviour
     }
 
     public static void CheckMap(byte mapIndex) {
-        if (Instance) {
-            CoinsMap map = System.Enum.IsDefined(typeof(CoinsMap), (int)mapIndex) ? (CoinsMap)(int)mapIndex : CoinsMap.None;
-            if (Instance.nextMap != map) {
-                Instance.nextMap = map;
-                SceneTransition.LoadScene(map.ToString());
-            }
+        CoinsMap map = System.Enum.IsDefined(typeof(CoinsMap), (int)mapIndex) ? (CoinsMap)(int)mapIndex : CoinsMap.None;
+        if (nextMap != map) {
+            nextMap = map;
+            SceneTransition.LoadScene(map.ToString());
         }
     }
 
-    public void UpdateMap() {
-        string currentSceneName = SceneManager.GetActiveScene().name;
-        currentMap = GetMapFromString(currentSceneName);
+    public void UpdateMap(string mapName) {
+        currentMap = GetMapFromString(mapName);
         nextMap = currentMap;
         player = GameObject.FindGameObjectWithTag("Player");
         respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
@@ -70,9 +67,10 @@ public class GameController : MonoBehaviour
     public static void ExternalPlayer(byte[] data, int index) {
         ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(data);
 
+        if (playerId == null || !nextMap.Equals(currentMap)) return;
         //parsing received data
         byte id = span[index + 53];
-        if (id == playerId) return;
+        if (id == playerId.Value) return;
         bool isDead = span[index] != 0; index += 1;
         int color = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
         int health = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
@@ -128,6 +126,7 @@ public class GameController : MonoBehaviour
         bool[] receivedIds = new bool[256];
 
         for (int i = 0; i < count; i++) {
+            if (playerId != null) if (data[index + i] == playerId.Value) continue;
             receivedIds[data[index + i]] = true;
         }
 

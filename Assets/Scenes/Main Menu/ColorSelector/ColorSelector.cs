@@ -30,7 +30,7 @@ public class ColorSelector : MonoBehaviour
     }
 
     public void Expand(float interpolationFactor) {
-        if (decorator.Color == PlayerPrefs.GetInt("Color", 11) && interpolationFactor <= 0.1f) {
+        if (decorator.Color == ColorManager.GetColor() && interpolationFactor <= 0.1f) {
             deepObject.Find("Secondary").GetComponent<SpriteRenderer>().color = Color.white;
         }
         innerObject.localPosition = Vector3.Lerp(startPosition, targetPosition, interpolationFactor);

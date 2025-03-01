@@ -1,9 +1,9 @@
 using UnityEngine;
 using TMPro;
-using System;
 
 public class Intro : MonoBehaviour
 {
+    private float rotation = 0;
     private SpriteRenderer sr;
     private TextMeshProUGUI topText, oinsText, bottomText, subText;
     private bool transitionStarted = false;
@@ -36,18 +36,17 @@ public class Intro : MonoBehaviour
         float cameraHalfHeight = Camera.main.orthographicSize;
         float cameraHalfWidth = cameraHalfHeight * Camera.main.aspect;
         ticks += Time.deltaTime * 40;
-        double rotation = 0;
 
         //C movement
         if (ticks < 37f)
         {
             float scale = Mathf.Max(-0.015f * (ticks - 25f) * (ticks - 65f) + 1f, 1f) / 3;
-            rotation = Math.Min(0.01507964473723 * ticks * (ticks - 70.710678118654752), rotation);
-            float x = ((float)rotation + 6f * Mathf.PI) * 0.054f * (transform.localScale.x / 2 + cameraHalfWidth);
+            rotation = Mathf.Min(rotation, Mathf.Max(0.01507964473723f * ticks * (ticks - 70.710678118654752f), -6 * Mathf.PI));
+            float x = (rotation + 6f * Mathf.PI) * 0.054f * (transform.localScale.x / 2 + cameraHalfWidth);
 
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(x, 0, transform.position.z);
-            transform.rotation = Quaternion.Euler(0f, 0f, (float)(-rotation * Mathf.Rad2Deg));
+            transform.rotation = Quaternion.Euler(0f, 0f, -rotation * Mathf.Rad2Deg);
         }
         else if (ticks < 40f)
         {
@@ -55,7 +54,7 @@ public class Intro : MonoBehaviour
             rotation = -6f * Mathf.PI;
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(0f, transform.position.y, transform.position.z);
-            transform.rotation = Quaternion.Euler(0f, 0f, (float)(rotation * Mathf.Rad2Deg));
+            transform.rotation = Quaternion.Euler(0f, 0f, rotation * Mathf.Rad2Deg);
         }
         else if (ticks < 70f)
         {
@@ -66,7 +65,7 @@ public class Intro : MonoBehaviour
 
             transform.localScale = new Vector3(scale, scale, transform.localScale.z);
             transform.position = new Vector3(x, transform.position.y, transform.position.z);
-            transform.rotation = Quaternion.Euler(0f, 0f, (float)(rotation * Mathf.Rad2Deg));
+            transform.rotation = Quaternion.Euler(0f, 0f, rotation * Mathf.Rad2Deg);
         }
 
         //Text opacity

@@ -67,7 +67,7 @@ public class GameController : MonoBehaviour
     public static void ExternalPlayer(byte[] data, int index) {
         ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(data);
 
-        if (playerId == null || !nextMap.Equals(currentMap)) return;
+        if (playerId == null || currentMap == CoinsMap.None) return;
         //parsing received data
         byte id = span[index + 53];
         if (id == playerId.Value) return;
@@ -103,6 +103,7 @@ public class GameController : MonoBehaviour
             player.playerId = id;
             externalPlayers.Add(id, player);
             player.transform.position = new Vector3(position.x, position.y, player.transform.position.z);
+            player.SetPosition(position);
         }
 
         // Update the player's properties using available public setters.

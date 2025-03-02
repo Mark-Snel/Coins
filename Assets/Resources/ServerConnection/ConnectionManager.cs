@@ -28,7 +28,7 @@ public class ConnectionManager {
         if (connection != null) {
             connection.Disconnect();
         }
-        #if UNITY_WEBGL && !UNITY_EDITOR
+        #if UNITY_WEBGL
             connection = new WebSocketConnection();
         #else
             connection = new UdpConnection();

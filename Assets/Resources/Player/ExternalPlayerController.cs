@@ -118,6 +118,9 @@ public class ExternalPlayerController : MonoBehaviour
         UpdateSizeAndMass();
         UpdateColor();
         ProcessDeath();
+        if (targetPosition != null) {
+            rb.position = targetPosition;
+        }
     }
 
     private void UpdateColor() {
@@ -146,7 +149,7 @@ public class ExternalPlayerController : MonoBehaviour
     }
 
     private void ProcessDeath() {
-        if (rb) {
+        if (rb && cl) {
             if (isDead) {
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
@@ -181,6 +184,11 @@ public class ExternalPlayerController : MonoBehaviour
     private Vector2 targetPosition;
     public void UpdatePosition(Vector2 position) {
         targetPosition = position;
+    }
+
+    public void SetPosition(Vector2 position) {
+        rb = GetComponent<Rigidbody2D>();
+        rb.position = position;
     }
 
 

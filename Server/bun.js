@@ -8,10 +8,6 @@ const Maps = Object.freeze({
 let currentMap = Maps.LOBBY;
 let nextMap = Maps.LOBBY;
 
-let availablePlayerIds = [];
-for (let i = 0; i < 256; i++) {
-    availablePlayerIds.push(i);
-}
 let nextWSId = 0;
 const players = new Map();
 let playerIdsPacket = Buffer.from([5, 0]);
@@ -218,8 +214,10 @@ rl.on("line", (input) => {
             }
             break;
         case "players":
-            console.log(clients);
-            console.log(players);
+            clients.forEach((value, key) => {
+                console.log(`Key: ${key}, Player ID: ${value.playerId}`);
+            });
+            console.log(players.keys());
             break;
         default:
             log(`unrecognized command: ${input}`);
@@ -244,7 +242,13 @@ const Deserialize = [
         if (remainingData.equals(expectedData)) {
             client.send(Buffer.from([1]));
             if (client.playerId === null) {
-                client.playerId = availablePlayerIds.shift();
+                const takenIds = new Set([...clients.values()].map(client => client.playerId));
+                for (let i = 0; i < 256; i++) {
+                    if (!takenIds.has(i)) {
+                        client.playerId = i;
+                        break;
+                    }
+                }
             }
         }
     },
@@ -258,9 +262,7 @@ const Deserialize = [
     },
     // 3 = playerdata
     (client, remainingData) => {
-        if (client.playerId === null) {
-            client.playerId = availablePlayerIds.shift();
-        }
+
         if (!players.has(client.playerId)) {
             players.set(client.playerId, remainingData);
             playersUpdated();
@@ -284,7 +286,6 @@ function deleteClient(key) {
                 players.delete(client.playerId);
                 playersUpdated();
             }
-            availablePlayerIds.unshift(client.playerId);
         }
         // If it's a WebSocket client, close its connection.
         if (client.type === "ws" && client.ws.readyState === WebSocket.OPEN) {

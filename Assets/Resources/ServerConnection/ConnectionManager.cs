@@ -20,8 +20,25 @@ using System.Collections.Generic;
 
 public class ConnectionManager {
     private static IConnection connection;
+
+    public static void Disconnected() {
+        PauseMenuController.GameDisconnected();
+        OnlineButton.FailConnection();
+    }
+    public static void Connected() {
+        OnlineButton.SucceedConnection();
+    }
+    public static void Connecting() {
+    }
+
     static ConnectionManager() {
         Application.quitting += OnApplicationQuit;
+    }
+
+    public static void Disconnect() {
+        if (connection != null) {
+            connection.Disconnect();
+        }
     }
 
     public static void Connect(string address) {
@@ -41,7 +58,7 @@ public class ConnectionManager {
                 Deserialize[packetType].Invoke(receivedData, 1);
             }
         };
-        Dispatcher.Create();
+        Dispatcher.Initialize();
         Dispatcher.ClearFixedUpdate();
         Dispatcher.OnFixedUpdate += () => {
             List<byte> packet = new List<byte>();
@@ -59,14 +76,6 @@ public class ConnectionManager {
         } catch {
             connection.Disconnect();
         }
-    }
-
-    public static void SubscribeToStatus(Action<ConnectionStatus> handler) {
-        connection.OnStatusChanged += handler;
-    }
-
-    public static void UnsubscribeFromStatus(Action<ConnectionStatus> handler) {
-        connection.OnStatusChanged -= handler;
     }
 
     private static void OnApplicationQuit() {

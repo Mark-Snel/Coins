@@ -75,35 +75,31 @@ public class OnlineButton : MonoBehaviour
     }
 
     public void Submit() {
+        Dispatcher.Initialize();
         connectedIp = ipInput.text;
         ConnectionManager.Connect(connectedIp);
-        ConnectionManager.SubscribeToStatus(HandleStatusChanged);
         feedback.ChangeText("Connecting...");
         coinDecorator.Color = -1;
         connecting = true;
     }
 
-    private void HandleStatusChanged(ConnectionStatus status) {
-        if (status == ConnectionStatus.Disconnected) {
-            FailConnection();
-        } else if (status == ConnectionStatus.Connected) {
-            SucceedConnection();
+    public static void FailConnection() {
+        OnlineButton instance = FindFirstObjectByType<OnlineButton>(0);
+        if (instance != null) {
+            instance.coinDecorator.Color = 1;
+            instance.feedback.ChangeText("Connection Failed");
+            instance.connecting = false;
         }
-
-        ConnectionManager.UnsubscribeFromStatus(HandleStatusChanged);
     }
-
-    void FailConnection() {
-        coinDecorator.Color = 1;
-        feedback.ChangeText("Connection Failed");
-        connecting = false;
-    }
-    void SucceedConnection() {
-        coinDecorator.Color = 10;
-        feedback.ChangeText("Game Found");
-        connecting = false;
-        PlayerPrefs.SetString("ip", connectedIp);
-        PlayerPrefs.Save();
+    public static void SucceedConnection() {
+        OnlineButton instance = FindFirstObjectByType<OnlineButton>(0);
+        if (instance != null) {
+            instance.coinDecorator.Color = 10;
+            instance.feedback.ChangeText("Game Found");
+            instance.connecting = false;
+            PlayerPrefs.SetString("ip", instance.connectedIp);
+            PlayerPrefs.Save();
+        }
     }
 
     void Update() {

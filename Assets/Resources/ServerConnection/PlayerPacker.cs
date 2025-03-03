@@ -18,7 +18,7 @@ public class PlayerPacker : MonoBehaviour
             Debug.LogError("Rigidbody2D component is missing!");
 
         if (player == null)
-            Debug.LogError("PlayerStats component is missing!");
+            Debug.LogError("PlayerController component is missing!");
     }
 
     //Packet structure:

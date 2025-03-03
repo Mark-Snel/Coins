@@ -3,8 +3,7 @@ using UnityEngine.InputSystem;
 using static InputHandling;
 using static ColorManager;
 
-public class PlayerController : MonoBehaviour
-{
+public class PlayerController : MonoBehaviour {
     public static PlayerController Instance { get; private set; }
 
     [SerializeField] private bool isDead = true;
@@ -122,6 +121,12 @@ public class PlayerController : MonoBehaviour
     private int jumpsRemaining; // Tracks how many jumps remain before landing
     private int jumpLengthRemaining; //Ticks remaining for “hold jump” extra force
     private float size;
+
+    public void Delete() {
+        Instance = null;
+        dataPacker = null;
+        Destroy(gameObject);
+    }
 
     public static PlayerPacker GetDataPacker() {
         return dataPacker;

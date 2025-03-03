@@ -172,8 +172,10 @@ setInterval(() => {
         packet = Buffer.concat([packet, playerPacket]);
     });
     clients.forEach((client) => {
-        const clientSpecificPacket = Buffer.concat([packet, Buffer.from([4, client.playerId])]);
-        client.send(clientSpecificPacket);
+        if (client.playerId !== null) {
+            const clientSpecificPacket = Buffer.concat([packet, Buffer.from([4, client.playerId])]);
+            client.send(clientSpecificPacket);
+        }
     });
 }, 20);
 
@@ -262,12 +264,13 @@ const Deserialize = [
     },
     // 3 = playerdata
     (client, remainingData) => {
-
-        if (!players.has(client.playerId)) {
-            players.set(client.playerId, remainingData);
-            playersUpdated();
-        } else {
-            players.set(client.playerId, remainingData);
+        if (client.playerId !== null) {
+            if (!players.has(client.playerId)) {
+                players.set(client.playerId, remainingData);
+                playersUpdated();
+            } else {
+                players.set(client.playerId, remainingData);
+            }
         }
     }
 ];

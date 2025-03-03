@@ -6,17 +6,26 @@ using System.Runtime.InteropServices;
 
 public class GameController : MonoBehaviour
 {
-    public static byte? playerId  = null;
+    public static byte? playerId = null;
     public static GameController Instance { get; private set; }
 
     private static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
 
     private static CoinsMap nextMap = CoinsMap.None;
     private static CoinsMap currentMap = CoinsMap.None;
-    private GameObject player;
     private GameObject[] respawnPoints;
 
-    public static void Create() {
+    void Unload() {
+        GameObject.FindGameObjectWithTag("Player")?.GetComponent<PlayerController>().Delete();
+        foreach (var player in externalPlayers.Values) {
+            player.Delete();
+            externalPlayers = new Dictionary<byte, ExternalPlayerController>();
+            ConnectionManager.Disconnect();
+        }
+        ConnectionManager.Disconnect();
+    }
+
+    public static void Initialize() {
         if (Instance == null) {
             GameObject obj = Resources.Load<GameObject>("Game/GameController");
             Instance = Instantiate(obj.GetComponent<GameController>());
@@ -31,6 +40,7 @@ public class GameController : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        PauseMenuController.Initialize();
     }
 
     public void Respawn() {
@@ -38,17 +48,24 @@ public class GameController : MonoBehaviour
     }
 
     public static void CheckMap(byte mapIndex) {
-        CoinsMap map = System.Enum.IsDefined(typeof(CoinsMap), (int)mapIndex) ? (CoinsMap)(int)mapIndex : CoinsMap.None;
-        if (nextMap != map) {
-            nextMap = map;
-            SceneTransition.LoadScene(map.ToString());
+        if (playerId != null) {
+            CoinsMap map = System.Enum.IsDefined(typeof(CoinsMap), (int)mapIndex) ? (CoinsMap)(int)mapIndex : CoinsMap.None;
+            if (nextMap != map) {
+                nextMap = map;
+                SceneTransition.LoadScene(map.ToString());
+            }
         }
     }
 
     public void UpdateMap(string mapName) {
         currentMap = GetMapFromString(mapName);
+        if (currentMap.Equals(CoinsMap.None)) {
+            PauseMenuController.enabled = false;
+            Unload();
+        } else {
+            PauseMenuController.enabled = true;
+        }
         nextMap = currentMap;
-        player = GameObject.FindGameObjectWithTag("Player");
         respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
     }
 

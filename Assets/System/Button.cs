@@ -10,7 +10,7 @@ public class Button : MonoBehaviour
     private Vector3 selectedScale;
     [SerializeField] private Vector2 selectedScaleAdditive = new Vector2(0.5f, 0.5f);
     [SerializeField] private float scaleSmoothFactor = 25f;
-    private bool selected = false;
+    public bool selected = false;
     private InputAction attackAction;
 
     // New callbacks that can be set externally.

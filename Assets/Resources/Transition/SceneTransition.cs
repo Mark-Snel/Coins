@@ -57,6 +57,7 @@ public class SceneTransition : MonoBehaviour
                 }
                 if (progress >= 1) {
                     SceneManager.LoadScene(destination);
+                    GameController.Initialize();
                     GameController.Instance?.UpdateMap(destination);
                     destination = "";
                     FlipShiny();

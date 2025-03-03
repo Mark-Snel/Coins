@@ -6,7 +6,6 @@ public interface IConnection {
     void Disconnect();
     void Send(byte[] data);
     event Action<byte[]> OnDataReceived;
-    event Action<ConnectionStatus> OnStatusChanged;
 }
 
 public enum ConnectionStatus {

@@ -16,11 +16,11 @@ public class Dispatcher : MonoBehaviour {
     }
 
     public static void StartCoro(Func<IEnumerator> action) {
-        Create();
+        Initialize();
         instance.StartCoroutine(action.Invoke());
     }
 
-    public static void Create() {
+    public static void Initialize() {
         if (instance == null) {
             var obj = new GameObject("Dispatcher");
             instance = obj.AddComponent<Dispatcher>();

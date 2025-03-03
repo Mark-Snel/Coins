@@ -59,7 +59,7 @@ public class UdpConnection : IConnection {
 
     public void Connected() {
         Dispatcher.Enqueue(() => {
-            GameController.Create();
+            GameController.Initialize();
             Status = ConnectionStatus.Connected;
             OnStatusChanged?.Invoke(Status);
         });

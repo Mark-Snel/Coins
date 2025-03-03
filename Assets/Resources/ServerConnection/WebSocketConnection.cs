@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class WebSocketConnection : IConnection {
     public event Action<byte[]> OnDataReceived;
-    public event Action<ConnectionStatus> OnStatusChanged;
 
     private WebSocket webSocket;
     public ConnectionStatus Status { get; private set; } = ConnectionStatus.Disconnected;
@@ -13,7 +12,7 @@ public class WebSocketConnection : IConnection {
     public async void Connect(string address) {
         Dispatcher.OnUpdate += Tick;
         Status = ConnectionStatus.Connecting;
-        OnStatusChanged?.Invoke(Status);
+        Dispatcher.Enqueue(ConnectionManager.Connecting);
 
         // Make sure the URL includes the proper protocol (ws:// or wss://)
         string url = "ws://" + address;
@@ -21,12 +20,7 @@ public class WebSocketConnection : IConnection {
 
         // Set up event handlers
         webSocket.OnOpen += () => {
-            Debug.Log("WebSocket Connection Open!");
-            Status = ConnectionStatus.Connected;
-            OnStatusChanged?.Invoke(Status);
-            Connected();
-            // Optionally send an initial connect message:
-            SendConnectMessage();
+            Dispatcher.Enqueue(SendConnectMessage);
         };
 
         webSocket.OnError += (errorMsg) => {
@@ -34,9 +28,8 @@ public class WebSocketConnection : IConnection {
         };
 
         webSocket.OnClose += (closeCode) => {
-            Debug.Log("WebSocket Closed!");
             Status = ConnectionStatus.Disconnected;
-            OnStatusChanged?.Invoke(Status);
+            Dispatcher.Enqueue(ConnectionManager.Disconnected);
         };
 
         webSocket.OnMessage += (bytes) => {
@@ -48,30 +41,27 @@ public class WebSocketConnection : IConnection {
         } catch (Exception ex) {
             Debug.Log("WebSocket Connection Failed: " + ex.Message);
             Status = ConnectionStatus.Disconnected;
-            OnStatusChanged?.Invoke(Status);
+            Dispatcher.Enqueue(ConnectionManager.Disconnected);
         }
     }
 
     public void Connected() {
         Dispatcher.Enqueue(() => {
-            GameController.Create();
+            GameController.Initialize();
             Status = ConnectionStatus.Connected;
-            OnStatusChanged?.Invoke(Status);
+            Dispatcher.Enqueue(ConnectionManager.Connected);
         });
     }
 
     public async void Disconnect() {
         if (webSocket != null) {
-            // Optionally send a disconnect message before closing.
             SendDisconnectMessage();
             await webSocket.Close();
         }
-        Status = ConnectionStatus.Disconnected;
-        OnStatusChanged?.Invoke(Status);
     }
 
     public async void Send(byte[] data) {
-        if (webSocket != null && Status == ConnectionStatus.Connected) {
+        if (webSocket != null && webSocket.State == WebSocketState.Open) {
             try {
                 await webSocket.Send(data);
             } catch (Exception ex) {

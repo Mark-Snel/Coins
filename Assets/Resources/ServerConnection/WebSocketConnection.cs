@@ -14,7 +14,7 @@ public class WebSocketConnection : IConnection {
         Status = ConnectionStatus.Connecting;
         Dispatcher.Enqueue(ConnectionManager.Connecting);
 
-        // Make sure the URL includes the proper protocol (ws:// or wss://)
+        // Make sure the URL includes the proper protocol (ws://)
         string url = "ws://" + address;
         webSocket = new WebSocket(url);
 

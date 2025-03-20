@@ -122,6 +122,13 @@ public class PlayerController : MonoBehaviour {
     private int jumpLengthRemaining; //Ticks remaining for “hold jump” extra force
     private float size;
 
+    private InputAction attackAction;
+    private InputAction aimAction;
+    [SerializeField] private WeaponController weapon;
+    public void EquipWeapon(WeaponController givenWeapon) {
+        weapon = givenWeapon;
+    }
+
     public void Delete() {
         Instance = null;
         dataPacker = null;
@@ -172,6 +179,14 @@ public class PlayerController : MonoBehaviour {
         if (jumpAction == null) {
             Debug.LogWarning("jumpAction not found");
         }
+        attackAction = InputSystem.actions.FindAction("Attack");
+        if (attackAction == null) {
+            Debug.LogWarning("attackAction not found");
+        }
+        aimAction = InputSystem.actions.FindAction("Aim");
+        if (attackAction == null) {
+            Debug.LogWarning("aimAction not found");
+        }
 
         health = maxHealth;
         UpdateSizeAndMass();
@@ -183,6 +198,10 @@ public class PlayerController : MonoBehaviour {
 
     void Update() {
         UpdateKeyState(jumpAction, ref jumpState);
+        weapon?.Attack(
+            GetRotationToCursor(transform.position, aimAction, Camera.main),
+            GetKeyState(attackAction)
+        );
     }
 
     void FixedUpdate() {

@@ -3,15 +3,13 @@ using UnityEngine.InputSystem;
 
 public static class InputHandling
 {
-    public enum KeyState
-    {
+    public enum KeyState {
         Released,
         None,
         Held,
         Pressed
     }
-    public static void UpdateKeyState(InputAction action, ref KeyState state)
-    {
+    public static void UpdateKeyState(InputAction action, ref KeyState state) {
         if (action.WasCompletedThisFrame()) {
             state = KeyState.Released;
         } else if (action.WasPerformedThisFrame()) {
@@ -20,8 +18,17 @@ public static class InputHandling
             state = KeyState.Held;
         }
     }
-    public static float GetRotationToCursor(Vector3 fromPosition, InputAction aimAction, Camera cam)
-    {
+    public static KeyState GetKeyState(InputAction action) {
+        if (action.WasCompletedThisFrame()) {
+            return KeyState.Released;
+        } else if (action.WasPerformedThisFrame()) {
+            return KeyState.Pressed;
+        } else if (action.ReadValue<float>() == 1) {
+            return KeyState.Held;
+        }
+        return KeyState.None;
+    }
+    public static float GetRotationToCursor(Vector3 fromPosition, InputAction aimAction, Camera cam) {
         //Read the Aim position (which should be a Vector2 screen position)
         Vector2 screenPosition = aimAction.ReadValue<Vector2>();
 

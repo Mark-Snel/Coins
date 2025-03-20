@@ -30,8 +30,47 @@ public static class ColorManager {
         new ColorSet(HexToColor("#FF00E0"), HexToColor("#AB007B")),
         new ColorSet(HexToColor("#FF00A3"), HexToColor("#AB0059"))
     };
-    public static Color HexToColor(string hex)
-    {
+    public static readonly Vector2[] HueSaturationPairs = new Vector2[] {
+        new Vector2(-177f/360f, 110f/100f),
+        new Vector2(-155f/360f, 105f/100f),
+        new Vector2(-144f/360f, 105f/100f),
+        new Vector2(-133f/360f, 130f/100f),
+        new Vector2(-129f/360f, 130f/100f),
+        new Vector2(-122f/360f, 120f/100f),
+        new Vector2(-110f/360f, 100f/100f),
+        new Vector2(-100f/360f, 120f/100f),
+        new Vector2(-90f/360f, 120f/100f),
+        new Vector2(-75f/360f, 110f/100f),
+        new Vector2(-25f/360f, 110f/100f),
+        new Vector2(0f/360f, 100f/100f),
+        new Vector2(20f/360f, 115f/100f),
+        new Vector2(30f/360f, 130f/100f),
+        new Vector2(45f/360f, 130f/100f),
+        new Vector2(55f/360f, 115f/100f),
+        new Vector2(80f/360f, 110f/100f),
+        new Vector2(107f/360f, 110f/100f),
+        new Vector2(115f/360f, 120f/100f),
+        new Vector2(120f/360f, 130f/100f),
+        new Vector2(130f/360f, 125f/100f),
+        new Vector2(145f/360f, 115f/100f),
+        new Vector2(155f/360f, 115f/100f),
+        new Vector2(165f/360f, 115f/100f)
+    };
+    public static Vector2 GetHueSaturation(int id) {
+        if (id == -1) {
+            color = PlayerPrefs.GetInt("color", 11);
+            if (color < 0 || color >= Colors.Length) {
+                color = 11;
+            }
+            return HueSaturationPairs[color];
+        } else if (id >= 0 && id < Colors.Length) {
+            return HueSaturationPairs[id];
+        } else {
+            return HueSaturationPairs[11];
+        }
+    }
+
+    public static Color HexToColor(string hex) {
         ColorUtility.TryParseHtmlString(hex, out Color color);
         return color;
     }
@@ -70,14 +109,12 @@ public static class ColorManager {
     }
 }
 
-public class ColorSet
-{
+public class ColorSet {
     public readonly Color Primary;
     public readonly Color Secondary;
 
     // Constructor to initialize colors
-    public ColorSet(Color primary, Color secondary)
-    {
+    public ColorSet(Color primary, Color secondary) {
         Primary = primary;
         Secondary = secondary;
     }

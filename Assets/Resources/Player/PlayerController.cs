@@ -273,6 +273,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void UpdateColor() {
+        weapon?.setColor(color);
         sr.color = GetColor(color).Secondary;
         isr.color = GetColor(color).Primary;
     }

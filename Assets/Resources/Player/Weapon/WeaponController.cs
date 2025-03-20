@@ -1,4 +1,5 @@
 using UnityEngine;
+using static ColorManager;
 using static InputHandling;
 
 public class WeaponController : MonoBehaviour {
@@ -28,7 +29,21 @@ public class WeaponController : MonoBehaviour {
     private int cooldown = 0;
     private int reloading = 0;
 
+    private Transform barrel;
+    private SpriteRenderer baseSprite;
+    private int color = -2;
+
+    public void setColor(int color) {
+        this.color = color;
+        Vector2 hs = GetHueSaturation(color);
+        baseSprite.material.SetFloat("_Hue", hs.x);
+        baseSprite.material.SetFloat("_Saturation", hs.y);
+    }
+
     void Start() {
+        baseSprite = transform.Find("Base")?.GetComponent<SpriteRenderer>();
+        barrel = transform.Find("Barrel");
+
         ammoCount = maxAmmoCount;
         burstCooldown = burstTimeBetweenShots;
     }

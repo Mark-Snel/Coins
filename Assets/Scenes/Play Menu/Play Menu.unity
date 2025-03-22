@@ -1634,6 +1634,7 @@ MonoBehaviour:
   destination: Lobby
   selectedScaleAdditive: {x: 0.5, y: 0.5}
   scaleSmoothFactor: 20
+  selected: 0
 --- !u!1 &1051405687
 GameObject:
   m_ObjectHideFlags: 0
@@ -2295,6 +2296,7 @@ MonoBehaviour:
   destination: 
   selectedScaleAdditive: {x: 0.5, y: 0.5}
   scaleSmoothFactor: 20
+  selected: 0
 --- !u!114 &1406769209
 MonoBehaviour:
   m_ObjectHideFlags: 0

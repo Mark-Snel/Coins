@@ -1703,6 +1703,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6968067969844963665, guid: 2d32d6fa02d9467b0b4b6503d97d8866, type: 3}
+      propertyPath: automatic
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6968067969844963665, guid: 2d32d6fa02d9467b0b4b6503d97d8866, type: 3}
+      propertyPath: reloadTime
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 6968067969844963665, guid: 2d32d6fa02d9467b0b4b6503d97d8866, type: 3}
+      propertyPath: attackCount
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6968067969844963665, guid: 2d32d6fa02d9467b0b4b6503d97d8866, type: 3}
+      propertyPath: maxAmmoCount
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6968067969844963665, guid: 2d32d6fa02d9467b0b4b6503d97d8866, type: 3}
+      propertyPath: timeBetweenShots
+      value: 25
+      objectReference: {fileID: 0}
     - target: {fileID: 6969828422697649412, guid: 2d32d6fa02d9467b0b4b6503d97d8866, type: 3}
       propertyPath: isDead
       value: 0

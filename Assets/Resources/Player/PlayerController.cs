@@ -156,7 +156,7 @@ public class PlayerController : MonoBehaviour {
         dataPacker = GetComponent<PlayerPacker>();
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
-        ist = transform.Find("InnerSprite"); // Replace with actual name
+        ist = transform.Find("InnerSprite");
         if (ist != null)
         {
             isr = ist.GetComponent<SpriteRenderer>();
@@ -197,11 +197,13 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
-        UpdateKeyState(jumpAction, ref jumpState);
-        weapon?.Attack(
-            GetRotationToCursor(transform.position, aimAction, Camera.main),
-            GetKeyState(attackAction)
-        );
+        if (!isDead) {
+            UpdateKeyState(jumpAction, ref jumpState);
+            weapon?.Attack(
+                GetRotationToCursor(transform.position, aimAction, Camera.main),
+                           GetKeyState(attackAction)
+            );
+        }
     }
 
     void FixedUpdate() {
@@ -289,6 +291,7 @@ public class PlayerController : MonoBehaviour {
 
     private void ProcessDeath() {
         if (isDead) {
+            weapon?.gameObject.SetActive(false);
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
             rb.simulated = false;
@@ -296,6 +299,7 @@ public class PlayerController : MonoBehaviour {
             sr.enabled = false;
             isr.enabled = false;
         } else {
+            weapon?.gameObject.SetActive(true);
             health = MaxHealth;
             rb.simulated = true;
             cl.enabled = true;
@@ -304,13 +308,17 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
-    private void OnValidate()
-    {
+    private void OnValidate() {
         if (rb) {
             UpdateSizeAndMass();
             UpdateColor();
             ProcessDeath();
         }
+    }
+
+    public void Hit(Vector2 knockback, int damage) {
+        Health -= damage;
+        rb.AddForce(knockback);
     }
 
     private Vector2 totalForce = Vector2.zero;

@@ -1,6 +1,7 @@
 using UnityEngine;
 using static ColorManager;
 using static InputHandling;
+using static ProjectilePool;
 
 public class WeaponController : MonoBehaviour {
     //weapon behaviour
@@ -8,20 +9,20 @@ public class WeaponController : MonoBehaviour {
     [SerializeField] private int reloadTime = 200; //in ticks
     [SerializeField] private int maxAmmoCount = 3;
     [SerializeField] private int burstSize = 1;
-    [SerializeField] private int burstTimeBetweenShots = 3; //only applies if burstSize > 1, in ticks
+    [SerializeField] private int burstTimeBetweenShots = 5; //only applies if burstSize > 1, in ticks
     [SerializeField] private int timeBetweenShots = 25; //in ticks
-    private float inheritInertia = 0; //multiplier of how much speed the projectile gets from the velocity of the player when shot.
-    private float recoil = 0;
+    [SerializeField] private float inheritInertia = 0; //multiplier of how much speed the projectile gets from the velocity of the player when shot.
+    [SerializeField] private float recoil = 0;
 
     //projectile behaviour
-    private float spread = 0;
-    private int attackLifeTime = 200; //in ticks
-    private int attackCount = 1; //projectiles per shot, a higher number cause a shotgun-effect
-    private float attackVelocity = 1;
-    private float attackAcceleration = 0;
-    private float attackGravity = 1;
-    private float knockback = 1;
-    private int damage = 30;
+    [SerializeField] private float spread = 0;
+    [SerializeField] private int attackLifeTime = 200; //in ticks
+    [SerializeField] private int attackCount = 1; //projectiles per shot, a higher number cause a shotgun-effect
+    [SerializeField] private float attackVelocity = 10;
+    [SerializeField] private float attackAcceleration = 0;
+    [SerializeField] private float attackGravity = 0.5f;
+    [SerializeField] private float knockback = 1;
+    [SerializeField] private int damage = 30;
 
     private int ammoCount;
     private int burstRemaining = 0;
@@ -29,8 +30,14 @@ public class WeaponController : MonoBehaviour {
     private int cooldown = 0;
     private int reloading = 0;
 
+    private Rigidbody2D playerRb;
     private Transform barrel;
+    private Animator barrelAnimator;
     private SpriteRenderer baseSprite;
+    private SpriteRenderer flashSprite;
+    public Sprite[] muzzleFlashSprites;
+    private float muzzleFlashTime = 0.02f;//in seconds
+    private float flashTimePassed = 0;
     private int color = -2;
 
     public void setColor(int color) {
@@ -42,7 +49,10 @@ public class WeaponController : MonoBehaviour {
 
     void Start() {
         baseSprite = transform.Find("Base")?.GetComponent<SpriteRenderer>();
+        flashSprite = transform.Find("Flash")?.GetComponent<SpriteRenderer>();
+        playerRb = transform.parent.GetComponent<Rigidbody2D>();
         barrel = transform.Find("Barrel");
+        barrelAnimator = barrel?.GetComponent<Animator>();
 
         ammoCount = maxAmmoCount;
         burstCooldown = burstTimeBetweenShots;
@@ -81,8 +91,56 @@ public class WeaponController : MonoBehaviour {
         cooldown = timeBetweenShots;
         burstRemaining--;
         ammoCount--;
+        showMuzzleFlash();
+        for (int i = 0; i < attackCount; i++) {
+            Projectile projectile = ProjectilePool.GetProjectile();
+            float weaponRotation = transform.rotation.eulerAngles.z;
+            float spreadAngle = Random.Range(-spread / 2f, spread / 2f);
+            float projectileRotation = weaponRotation + spreadAngle;
+            Vector2 projectileBaseVelocity = new Vector2(
+                Mathf.Cos(Mathf.Deg2Rad * projectileRotation),
+                Mathf.Sin(Mathf.Deg2Rad * projectileRotation)
+            ) * attackVelocity;
+            Vector2 playerVelocity = playerRb.linearVelocity;
+            Vector2 finalProjectileVelocity = projectileBaseVelocity + playerVelocity * inheritInertia;
+
+            float finalRotation = Mathf.Rad2Deg * Mathf.Atan2(finalProjectileVelocity.y, finalProjectileVelocity.x);
+            projectile.transform.position = new Vector3(transform.position.x, transform.position.y, projectile.transform.position.z);
+            projectile.transform.rotation = Quaternion.Euler(0f, 0f, finalRotation);
+
+            projectile.Fire(attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage);
+            playerRb.AddForce(new Vector2(
+                -Mathf.Cos(Mathf.Deg2Rad * weaponRotation),
+                -Mathf.Sin(Mathf.Deg2Rad * weaponRotation)
+            ) * recoil);
+        }
+        barrelAnimator.Play("Recoil", 0, 0);
+        if (burstRemaining > 0) {
+            barrelAnimator.speed = 50f / Mathf.Max(burstTimeBetweenShots, 0.5f);
+        } else {
+            barrelAnimator.speed = 50f / Mathf.Max(timeBetweenShots, 0.5f);
+        }
+
         if (ammoCount <= 0 && reloading <= 0) {
             reloading = reloadTime;
         }
+    }
+
+    void showMuzzleFlash() {
+        flashSprite.sprite = muzzleFlashSprites[Random.Range(0, muzzleFlashSprites.Length)];
+        flashSprite.transform.localScale = new Vector3(1, Random.Range(0, 2) * 2 - 1, 1);
+        flashSprite.enabled = true;
+        flashTimePassed = 0;
+    }
+
+    void Update() {
+        flashTimePassed += Time.deltaTime;
+        if (flashTimePassed > muzzleFlashTime) {
+            hideMuzzleFlash();
+        }
+    }
+
+    void hideMuzzleFlash() {
+        flashSprite.enabled = false;
     }
 }

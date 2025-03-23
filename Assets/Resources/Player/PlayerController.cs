@@ -288,7 +288,7 @@ public class PlayerController : MonoBehaviour {
         size = baseSize + (maxHealth_SizeMultiplier * Mathf.Sqrt(maxHealth));
         transform.localScale = new Vector3(size, size, 1f);
         float innerSize = (size - edgeSize) / size;
-        ist.localScale = new Vector3(innerSize, innerSize, 1f);
+        // ist.localScale = new Vector3(innerSize, innerSize, 1f);
         rb.mass = massPerSize * size * size * massMultiplier;
     }
 

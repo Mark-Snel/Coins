@@ -108,10 +108,9 @@ public class WeaponController : MonoBehaviour {
     void Fire() {
         cooldown = timeBetweenShots;
         burstRemaining--;
-        ammoCount--;
-        player.UpdateAmmo(ammoCount);
         showMuzzleFlash();
         for (int i = 0; i < attackCount; i++) {
+            ammoCount--;
             Projectile projectile = ProjectilePool.GetProjectile();
             float weaponRotation = transform.rotation.eulerAngles.z;
             float spreadAngle = Random.Range(-spread / 2f, spread / 2f);
@@ -133,6 +132,7 @@ public class WeaponController : MonoBehaviour {
                 -Mathf.Sin(Mathf.Deg2Rad * weaponRotation)
             ) * recoil);
         }
+        player.UpdateAmmo(ammoCount);
         barrelAnimator.Play("Recoil", 0, 0);
         if (burstRemaining > 0) {
             barrelAnimator.speed = 50f / Mathf.Max(burstTimeBetweenShots, 0.5f);

@@ -8,6 +8,15 @@ public class WeaponController : MonoBehaviour {
     [SerializeField] private bool automatic = false;
     [SerializeField] private int reloadTime = 200; //in ticks
     [SerializeField] private int maxAmmoCount = 3;
+    public int MaxAmmoCount {
+        get { return maxAmmoCount; }
+        set {
+            if (maxAmmoCount != value) {
+                maxAmmoCount = value;
+                UpdateMaxAmmo();
+            }
+        }
+    }
     [SerializeField] private int burstSize = 1;
     [SerializeField] private int burstTimeBetweenShots = 5; //only applies if burstSize > 1, in ticks
     [SerializeField] private int timeBetweenShots = 25; //in ticks
@@ -39,6 +48,7 @@ public class WeaponController : MonoBehaviour {
     private float muzzleFlashTime = 0.02f;//in seconds
     private float flashTimePassed = 0;
     private int color = -2;
+    private PlayerController player;
 
     public void setColor(int color) {
         this.color = color;
@@ -48,6 +58,7 @@ public class WeaponController : MonoBehaviour {
     }
 
     void Start() {
+        player = transform.parent.GetComponent<PlayerController>();
         baseSprite = transform.Find("Base")?.GetComponent<SpriteRenderer>();
         flashSprite = transform.Find("Flash")?.GetComponent<SpriteRenderer>();
         playerRb = transform.parent.GetComponent<Rigidbody2D>();
@@ -55,6 +66,8 @@ public class WeaponController : MonoBehaviour {
         barrelAnimator = barrel?.GetComponent<Animator>();
 
         ammoCount = maxAmmoCount;
+        player.UpdateMaxAmmo(maxAmmoCount);
+        player.UpdateAmmo(ammoCount);
         burstCooldown = burstTimeBetweenShots;
     }
 
@@ -68,7 +81,12 @@ public class WeaponController : MonoBehaviour {
         } else if (cooldown > 0) cooldown--;
         if (ammoCount <= 0 && reloading <= 0) {
             ammoCount = maxAmmoCount;
-        } else if (reloading > 0) reloading--;
+            player.UpdateAmmo(ammoCount);
+            player.UpdateReload(reloadTime, reloading);
+        } else if (reloading > 0) {
+            reloading--;
+            player.UpdateReload(reloadTime, reloading);
+        }
     }
 
     public void Attack(float direction, KeyState keyState) {
@@ -91,6 +109,7 @@ public class WeaponController : MonoBehaviour {
         cooldown = timeBetweenShots;
         burstRemaining--;
         ammoCount--;
+        player.UpdateAmmo(ammoCount);
         showMuzzleFlash();
         for (int i = 0; i < attackCount; i++) {
             Projectile projectile = ProjectilePool.GetProjectile();
@@ -142,5 +161,13 @@ public class WeaponController : MonoBehaviour {
 
     void hideMuzzleFlash() {
         flashSprite.enabled = false;
+    }
+
+    void OnValidate() {
+        UpdateMaxAmmo();
+    }
+
+    void UpdateMaxAmmo() {
+        if (player) player.UpdateMaxAmmo(maxAmmoCount);
     }
 }

@@ -31,10 +31,8 @@ public class PlayerController : MonoBehaviour {
     public int MaxJumps { get { return maxJumps; } set { maxJumps = value; } }
     public float MassPerSize {
         get { return massPerSize; }
-        set
-        {
-            if (massPerSize != value)
-            {
+        set {
+            if (massPerSize != value) {
                 massPerSize = value;
                 UpdateSizeAndMass();
             }
@@ -42,10 +40,8 @@ public class PlayerController : MonoBehaviour {
     }
     public float MassMultiplier {
         get { return massMultiplier; }
-        set
-        {
-            if (massMultiplier != value)
-            {
+        set {
+            if (massMultiplier != value) {
                 massMultiplier = value;
                 UpdateSizeAndMass();
             }
@@ -53,10 +49,8 @@ public class PlayerController : MonoBehaviour {
     }
     public float BaseSize {
         get { return baseSize; }
-        set
-        {
-            if (baseSize != value)
-            {
+        set {
+            if (baseSize != value) {
                 baseSize = value;
                 UpdateSizeAndMass();
             }
@@ -64,21 +58,18 @@ public class PlayerController : MonoBehaviour {
     }
     public int MaxHealth {
         get { return maxHealth; }
-        set
-        {
-            if (maxHealth != value)
-            {
+        set {
+            if (maxHealth != value) {
                 maxHealth = value;
+                hud?.UpdateHealth(health, maxHealth);
                 UpdateSizeAndMass();
             }
         }
     }
     public float MaxHealth_SizeMultiplier {
         get { return maxHealth_SizeMultiplier; }
-        set
-        {
-            if (maxHealth_SizeMultiplier != value)
-            {
+        set {
+            if (maxHealth_SizeMultiplier != value) {
                 maxHealth_SizeMultiplier = value;
                 UpdateSizeAndMass();
             }
@@ -86,10 +77,8 @@ public class PlayerController : MonoBehaviour {
     }
     public bool IsDead {
         get { return isDead; }
-        set
-        {
-            if (isDead != value)
-            {
+        set {
+            if (isDead != value) {
                 isDead = value;
                 ProcessDeath();
             }
@@ -97,11 +86,10 @@ public class PlayerController : MonoBehaviour {
     }
     public int Health {
         get { return health; }
-        set
-        {
-            if (health != value)
-            {
+        set {
+            if (health != value) {
                 health = value;
+                hud?.UpdateHealth(health, maxHealth);
                 if (health <= 0) {
                     IsDead = true;
                 }
@@ -129,6 +117,20 @@ public class PlayerController : MonoBehaviour {
         weapon = givenWeapon;
     }
 
+    private HUD hud;
+    public void UpdateMaxAmmo(int count){
+        hud?.UpdateMaxAmmo(count);
+    }
+    public void UpdateAmmo(int count) {
+        hud?.UpdateAmmo(count);
+    }
+    public void UpdateReload(int reloadTime, int reloadProgress) {
+        hud?.UpdateReload(reloadTime, reloadProgress);
+    }
+
+
+
+
     public void Delete() {
         Instance = null;
         dataPacker = null;
@@ -148,6 +150,7 @@ public class PlayerController : MonoBehaviour {
         }
 
         Instance = this;
+        hud = transform.Find("HUD").GetComponent<HUD>();
         DontDestroyOnLoad(gameObject);
     }
 
@@ -188,7 +191,7 @@ public class PlayerController : MonoBehaviour {
             Debug.LogWarning("aimAction not found");
         }
 
-        health = maxHealth;
+        Health = maxHealth;
         UpdateSizeAndMass();
         Color = ColorManager.GetColor();
         UpdateColor();
@@ -281,7 +284,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void UpdateSizeAndMass() {
-        if (health > maxHealth) health = MaxHealth;
+        if (health > maxHealth) Health = MaxHealth;
         size = baseSize + (maxHealth_SizeMultiplier * Mathf.Sqrt(maxHealth));
         transform.localScale = new Vector3(size, size, 1f);
         float innerSize = (size - edgeSize) / size;
@@ -291,6 +294,7 @@ public class PlayerController : MonoBehaviour {
 
     private void ProcessDeath() {
         if (isDead) {
+            hud?.gameObject.SetActive(false);
             weapon?.gameObject.SetActive(false);
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
@@ -299,8 +303,9 @@ public class PlayerController : MonoBehaviour {
             sr.enabled = false;
             isr.enabled = false;
         } else {
+            hud?.gameObject.SetActive(true);
             weapon?.gameObject.SetActive(true);
-            health = MaxHealth;
+            Health = MaxHealth;
             rb.simulated = true;
             cl.enabled = true;
             sr.enabled = true;

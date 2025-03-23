@@ -6,6 +6,10 @@ public static class ProjectilePool {
     private static Queue<Projectile> pool = new Queue<Projectile>();
     private static GameObject projectileContainer;
 
+    public static void Reset() {
+        pool = new Queue<Projectile>();
+    }
+
     public static Projectile GetProjectile() {
         if (pool.Count > 0) {
             Projectile projectile = pool.Dequeue();
@@ -27,6 +31,7 @@ public static class ProjectilePool {
             projectileContainer = GameObject.Find("ProjectileContainer");
             if (projectileContainer == null) {
                 projectileContainer = new GameObject("ProjectileContainer");
+                GameObject.DontDestroyOnLoad(projectileContainer);
             }
         }
         for (int i = 0; i < poolSize; i++) {

@@ -2,26 +2,22 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class HUD : MonoBehaviour {
-    private GameObject bulletPrefab;
+    public GameObject bulletPrefab;
     private Vector2 startPosition = new Vector2(-0.675f, 0);
     private float spacing = 0.3375f;
     private int maxSquaresPerRow = 5;
 
-    private Transform ammoContainer;
+    public Transform ammoContainer;
     private int currentAmmo = 0;
-    private Transform reloadBar;
-    private Transform reloadProgressBar;
+    public Transform reloadBar;
+    public Transform reloadProgressBar;
 
-    private Transform HealthBar;
+    public Transform healthBar;
 
     private List<GameObject> ammoSquares = new List<GameObject>();
 
     void Start() {
-        bulletPrefab = Resources.Load<GameObject>("Player/HUD/Bullet");
         ammoContainer = transform.Find("Ammo");
-        reloadBar = transform.Find("ReloadBar");
-        reloadProgressBar = reloadBar?.Find("Progress");
-        HealthBar = transform.Find("HealthBar")?.Find("Health");
     }
     public void UpdateReload(int reloadTime, int reloadProgress) {
         if (currentAmmo <= 0) {
@@ -54,6 +50,6 @@ public class HUD : MonoBehaviour {
     }
 
     public void UpdateHealth(int health, int maxHealth) {
-        HealthBar.localScale = new Vector3((float)health/(float)maxHealth, HealthBar.localScale.y, HealthBar.localScale.z);
+        healthBar.localScale = new Vector3((float)health/(float)maxHealth, healthBar.localScale.y, healthBar.localScale.z);
     }
 }

@@ -99,6 +99,23 @@ public class ExternalPlayerController : MonoBehaviour
     private CircleCollider2D cl;
     private float size;
 
+    [SerializeField] private ExternalWeaponController weapon;
+    public ExternalWeaponController Weapon {
+        get {return weapon;}
+        private set {}
+    }
+
+    public HUD hud;
+    public void UpdateMaxAmmo(int count){
+        hud.UpdateMaxAmmo(count);
+    }
+    public void UpdateAmmo(int count) {
+        hud.UpdateAmmo(count);
+    }
+    public void UpdateReload(int reloadTime, int reloadProgress) {
+        hud.UpdateReload(reloadTime, reloadProgress);
+    }
+
     void Start() {
         DontDestroyOnLoad(gameObject);
         rb = GetComponent<Rigidbody2D>();
@@ -124,6 +141,7 @@ public class ExternalPlayerController : MonoBehaviour
     }
 
     private void UpdateColor() {
+        weapon?.SetColor(color);
         if (sr) {
             sr.color = GetColor(color).Secondary;
             isr.color = GetColor(color).Primary;

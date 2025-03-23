@@ -8,6 +8,7 @@ using System.Collections.Generic;
  1 = connect
  2 = disconnect
  3 = playerdata
+ 4 = weaponData
  */
 /*Server sent packets:
  0 *= ping

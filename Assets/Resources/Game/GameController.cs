@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-public class GameController : MonoBehaviour
-{
+public class GameController : MonoBehaviour {
+    private static GameObject externalPlayerPrefab;
     public static byte? playerId = null;
     public static GameController Instance { get; private set; }
 
@@ -16,6 +16,7 @@ public class GameController : MonoBehaviour
     private GameObject[] respawnPoints;
 
     void Unload() {
+        ProjectilePool.Reset();
         GameObject.FindGameObjectWithTag("Player")?.GetComponent<PlayerController>().Delete();
         foreach (var player in externalPlayers.Values) {
             player.Delete();
@@ -41,6 +42,7 @@ public class GameController : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         PauseMenuController.Initialize();
+        externalPlayerPrefab = Resources.Load<GameObject>("Player/ExternalPlayer/ExternalPlayer");
     }
 
     public void Respawn() {
@@ -52,6 +54,7 @@ public class GameController : MonoBehaviour
             CoinsMap map = System.Enum.IsDefined(typeof(CoinsMap), (int)mapIndex) ? (CoinsMap)(int)mapIndex : CoinsMap.None;
             if (nextMap != map) {
                 nextMap = map;
+                Debug.Log(map.ToString());
                 SceneTransition.LoadScene(map.ToString());
             }
         }
@@ -86,7 +89,7 @@ public class GameController : MonoBehaviour
 
         if (playerId == null || currentMap == CoinsMap.None) return;
         //parsing received data
-        byte id = span[index + 53];
+        byte id = span[index + PlayerPacker.PacketLength - 1];
         if (id == playerId.Value) return;
         bool isDead = span[index] != 0; index += 1;
         int color = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
@@ -106,16 +109,24 @@ public class GameController : MonoBehaviour
         float forceY = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
         Vector2 force = new Vector2(forceX, forceY);
 
+        //weapon
+        float direction = MemoryMarshal.Read<float>(span.Slice(index)); index += 4;
+        int reloadTime = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
+        int maxAmmoCount = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
+        int ammoCount = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
+        int timeBetweenShots = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
+        int burstSize = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
+        int burstTimeBetweenShots = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
+        int attackCount = MemoryMarshal.Read<int>(span.Slice(index)); index += 4;
 
         ExternalPlayerController player;
         if (!externalPlayers.TryGetValue(id, out player)) {
-            GameObject prefab = Resources.Load<GameObject>("Player/ExternalPlayer");
-            if(prefab == null)
+            if(externalPlayerPrefab == null)
             {
                 Debug.LogError("ExternalPlayer prefab not found in Resources/Player/");
                 return;
             }
-            GameObject newPlayer = GameObject.Instantiate(prefab, position, Quaternion.identity);
+            GameObject newPlayer = GameObject.Instantiate(externalPlayerPrefab, position, Quaternion.identity);
             player = newPlayer.GetComponent<ExternalPlayerController>();
             player.playerId = id;
             externalPlayers.Add(id, player);
@@ -132,6 +143,16 @@ public class GameController : MonoBehaviour
         player.MaxHealth = maxHealth;
         player.MaxHealth_SizeMultiplier = maxHealth_SizeMultiplier;
         player.Color = color;
+
+        //weapon
+        player.Weapon.reloadTime = reloadTime;
+        player.Weapon.MaxAmmoCount = maxAmmoCount;
+        player.Weapon.AmmoCount = ammoCount;
+        player.Weapon.timeBetweenShots = timeBetweenShots;
+        player.Weapon.burstSize = burstSize;
+        player.Weapon.burstTimeBetweenShots = burstTimeBetweenShots;
+        player.Weapon.attackCount = attackCount;
+        player.Weapon.Aim(direction);
 
         // Update position and velocity.
         player.UpdatePosition(position);

@@ -265,15 +265,32 @@ const Deserialize = [
     // 3 = playerdata
     (client, remainingData) => {
         if (client.playerId !== null) {
+            if (remainingData.length < PLAYER_DATA_SIZE) {
+                return;
+            }
+            const playerData = remainingData.slice(0, PLAYER_DATA_SIZE);
+            const nextData = remainingData.slice(PLAYER_DATA_SIZE);
+
             if (!players.has(client.playerId)) {
-                players.set(client.playerId, remainingData);
+                players.set(client.playerId, playerData);
                 playersUpdated();
             } else {
-                players.set(client.playerId, remainingData);
+                players.set(client.playerId, playerData);
+            }
+
+            // If there's more data left, continue deserializing
+            if (nextData.length > 0) {
+                const nextIndex = nextData[0];
+                const nextRemainingData = nextData.slice(1);
+                if (Deserialize[nextIndex]) {
+                    Deserialize[nextIndex](client, nextRemainingData);
+                }
             }
         }
     }
 ];
+
+const PLAYER_DATA_SIZE = 85;
 
 // --- Helper Functions ---
 async function log(message) {

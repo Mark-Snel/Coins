@@ -165,6 +165,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2f749ae367116da0b51c0c1387b66cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bulletPrefab: {fileID: 2042673420682007655, guid: 1c786b7b9c77cf389847750d600dee1f, type: 3}
+  ammoContainer: {fileID: 8727080651670044782}
+  reloadBar: {fileID: 6338062283042802999}
+  reloadProgressBar: {fileID: 8276723252021296521}
+  healthBar: {fileID: 976425452190322438}
 --- !u!1 &5033246683679533843
 GameObject:
   m_ObjectHideFlags: 0

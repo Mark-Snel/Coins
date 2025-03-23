@@ -50,7 +50,18 @@ public class WeaponController : MonoBehaviour {
     private int color = -2;
     private PlayerController player;
 
-    public void setColor(int color) {
+    public float Direction {
+        get { return transform.eulerAngles.z; }
+        private set {}
+    }
+    public int ReloadTime { get { return reloadTime; } set { reloadTime = value; } }
+    public int AmmoCount { get { return ammoCount; } set { ammoCount = value; } }
+    public int TimeBetweenShots { get { return timeBetweenShots; } set { timeBetweenShots = value; } }
+    public int BurstSize { get { return burstSize; } set { burstSize = value; } }
+    public int BurstTimeBetweenShots { get { return burstTimeBetweenShots; } set { burstTimeBetweenShots = value; } }
+    public int AttackCount { get { return attackCount; } set { attackCount = value; } }
+
+    public void SetColor(int color) {
         this.color = color;
         Vector2 hs = GetHueSaturation(color);
         baseSprite.material.SetFloat("_Hue", hs.x);

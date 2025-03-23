@@ -98,6 +98,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     private static PlayerPacker dataPacker;
+    private static WeaponPacker weaponPacker;
     private Rigidbody2D rb;
     private SpriteRenderer sr;
     private Transform ist;
@@ -113,9 +114,6 @@ public class PlayerController : MonoBehaviour {
     private InputAction attackAction;
     private InputAction aimAction;
     [SerializeField] private WeaponController weapon;
-    public void EquipWeapon(WeaponController givenWeapon) {
-        weapon = givenWeapon;
-    }
 
     private HUD hud;
     public void UpdateMaxAmmo(int count){
@@ -137,14 +135,16 @@ public class PlayerController : MonoBehaviour {
         Destroy(gameObject);
     }
 
+    public static WeaponPacker GetWeaponPacker() {
+        return weaponPacker;
+    }
+
     public static PlayerPacker GetDataPacker() {
         return dataPacker;
     }
 
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
+    private void Awake() {
+        if (Instance != null && Instance != this) {
             Destroy(gameObject);
             return;
         }
@@ -157,19 +157,16 @@ public class PlayerController : MonoBehaviour {
     void Start() {
         Application.runInBackground = true;
         dataPacker = GetComponent<PlayerPacker>();
+        weaponPacker = weapon?.GetComponent<WeaponPacker>();
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
         ist = transform.Find("InnerSprite");
-        if (ist != null)
-        {
+        if (ist != null) {
             isr = ist.GetComponent<SpriteRenderer>();
-            if (isr == null)
-            {
+            if (isr == null) {
                 Debug.LogError("Invalid InnerSprite in player");
             }
-        }
-        else
-        {
+        } else {
             Debug.LogError("InnerSprite not found");
         }
         cl = GetComponent<CircleCollider2D>();
@@ -278,7 +275,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void UpdateColor() {
-        weapon?.setColor(color);
+        weapon?.SetColor(color);
         sr.color = GetColor(color).Secondary;
         isr.color = GetColor(color).Primary;
     }

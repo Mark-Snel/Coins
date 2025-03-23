@@ -4,13 +4,11 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(PlayerController))]
-public class PlayerPacker : MonoBehaviour
-{
+public class PlayerPacker : MonoBehaviour {
     private Rigidbody2D rb;
     private PlayerController player;
 
-    void Awake()
-    {
+    void Awake() {
         rb = GetComponent<Rigidbody2D>();
         player = GetComponent<PlayerController>();
 
@@ -37,10 +35,12 @@ public class PlayerPacker : MonoBehaviour
     //Total = 1 + 7*4 + 8*3 = 53 bytes
     //Also identifier, so +1 = 54 bytes
 
+    //plus weapon = 85 bytes
+
     //On server theres also (added to the back):
     //1 byte - byte id
-    //Which would be 54 bytes received (without identifier)
-    public static int PacketLength { get; private set; } = 54;
+    //Which would be 86 bytes received (without identifier)
+    public static int PacketLength { get; private set; } = 86;
 
     public void GetPacket(List<byte> packet) {
         //Identifier
@@ -49,7 +49,7 @@ public class PlayerPacker : MonoBehaviour
         //Pack bool isDead as a single byte (0 = false, 1 = true)
         packet.Add(player.IsDead ? (byte)1 : (byte)0);
 
-        //Helper: pack an int (4 bytes)
+        //Pack int color (4 bytes)
         packet.AddRange(BitConverter.GetBytes(player.Color));
 
         //Pack int health
@@ -81,5 +81,7 @@ public class PlayerPacker : MonoBehaviour
         Vector2 force = player.GetForce();
         packet.AddRange(BitConverter.GetBytes(force.x));
         packet.AddRange(BitConverter.GetBytes(force.y));
+
+        PlayerController.GetWeaponPacker()?.GetPacket(packet);
     }
 }

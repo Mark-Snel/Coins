@@ -1,7 +1,7 @@
 using UnityEngine;
 using static ColorManager;
 using static InputHandling;
-using static ProjectilePool;
+using static ObjectPool<Projectile>;
 
 public class WeaponController : MonoBehaviour {
     //weapon behaviour
@@ -122,7 +122,7 @@ public class WeaponController : MonoBehaviour {
         showMuzzleFlash();
         for (int i = 0; i < attackCount; i++) {
             ammoCount--;
-            Projectile projectile = ProjectilePool.GetProjectile();
+            Projectile projectile = ObjectPool<Projectile>.Get();
             float weaponRotation = transform.rotation.eulerAngles.z;
             float spreadAngle = Random.Range(-spread / 2f, spread / 2f);
             float projectileRotation = weaponRotation + spreadAngle;
@@ -138,6 +138,7 @@ public class WeaponController : MonoBehaviour {
             projectile.transform.rotation = Quaternion.Euler(0f, 0f, finalRotation);
 
             projectile.Fire(attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage);
+            WeaponPacker.AddShot(transform.position.x, transform.position.y, finalRotation, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage);
             playerRb.AddForce(new Vector2(
                 -Mathf.Cos(Mathf.Deg2Rad * weaponRotation),
                 -Mathf.Sin(Mathf.Deg2Rad * weaponRotation)

@@ -8,7 +8,7 @@ using System.Collections.Generic;
  1 = connect
  2 = disconnect
  3 = playerdata
- 4 = weaponData
+ 4 = shots
  */
 /*Server sent packets:
  0 *= ping
@@ -17,6 +17,7 @@ using System.Collections.Generic;
  3 = playerdata
  4 = playerId
  5 = playerIdList
+ 6 = shots
  */
 
 public class ConnectionManager {
@@ -65,9 +66,9 @@ public class ConnectionManager {
             List<byte> packet = new List<byte>();
 
             PlayerController.GetDataPacker()?.GetPacket(packet);
+            WeaponPacker.GetShotsPacket(packet);
 
-            if (packet.Count > 0)
-            {
+            if (packet.Count > 0) {
                 byte[] finalPacket = packet.ToArray();
                 connection.Send(finalPacket);
             }
@@ -114,7 +115,17 @@ public class ConnectionManager {
             GameController.CheckPlayers(data, playerListIndex, length);
             index += length;
             continueDeserializing(data, index);
-        }
+        },
+        (byte[] data, int index) => { // shots
+            byte playerId = data[index++];
+            int length = BitConverter.ToInt32(data, index);
+            index += 4;
+            int shotsIndex = index;
+            GameController.ShotsFired(data, shotsIndex, length, playerId);
+            index += length * WeaponPacker.PerShotPacketSize;
+            continueDeserializing(data, index);
+        },
+
     };
 
     private static void continueDeserializing(byte[] data, int index) {

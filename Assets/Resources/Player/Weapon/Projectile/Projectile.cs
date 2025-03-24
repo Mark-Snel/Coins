@@ -1,5 +1,5 @@
 using UnityEngine;
-using static ProjectilePool;
+using static ObjectPool<Projectile>;
 
 public class Projectile : MonoBehaviour {
     private int lifeTime;
@@ -19,6 +19,7 @@ public class Projectile : MonoBehaviour {
     private float finalDistance = float.MaxValue;
     private bool killOnNextFrame = false;
     private bool ending = false;
+    private float surfaceNormal;
 
     private float targetTrailLength;
     private float oldTrailLength;
@@ -65,6 +66,13 @@ public class Projectile : MonoBehaviour {
             transform.rotation = Quaternion.Euler(0f, 0f, targetRotation);
             trail.localScale = new Vector3(defaultTrailScale.x, Mathf.Max(targetTrailLength, defaultTrailScale.y), defaultTrailScale.z);
             killOnNextFrame = true;
+
+            ImpactEffect impactEffect = ObjectPool<ImpactEffect>.Get();
+            if (impactEffect != null) {
+                impactEffect.transform.position = finalPosition;
+                impactEffect.transform.rotation = Quaternion.Euler(0f, 0f, surfaceNormal - 90);
+                impactEffect.Activate(0.03f);
+            }
             return;
         }
         transform.position = Vector3.Lerp(oldPosition, targetPosition, interpolationFactor);
@@ -125,6 +133,7 @@ public class Projectile : MonoBehaviour {
         ending = true;
         finalDistance = hit.distance/velocity;
         finalPosition = new Vector3(hit.point.x, hit.point.y, transform.position.z);
+        surfaceNormal = Mathf.Atan2(hit.normal.y, hit.normal.x) * Mathf.Rad2Deg;
         PlayerController player = hit.collider.GetComponent<PlayerController>();
         if (player != null) {
             player.Hit(new Vector2(
@@ -140,6 +149,6 @@ public class Projectile : MonoBehaviour {
         interpolation = 0;
         trail.localScale = defaultTrailScale;
         finalDistance = float.MaxValue;
-        ProjectilePool.ReturnProjectile(this);
+        ObjectPool<Projectile>.Return(this);
     }
 }

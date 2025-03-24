@@ -1,6 +1,6 @@
 using UnityEngine;
 using static ColorManager;
-using static ProjectilePool;
+using static ObjectPool<Projectile>;
 
 public class ExternalWeaponController : MonoBehaviour {
     private float interpolationFactor = 0.01f;
@@ -74,10 +74,10 @@ public class ExternalWeaponController : MonoBehaviour {
             burstCooldown--;
             if (burstCooldown <= 0) {
                 burstCooldown = burstTimeBetweenShots;
-                Fire();
             }
         } else if (cooldown > 0) cooldown--;
         if (ammoCount <= 0 && reloading <= 0) {
+            reloading = reloadTime;
             player.UpdateAmmo(ammoCount);
             player.UpdateReload(reloadTime, reloading);
         } else if (reloading > 0) {
@@ -85,22 +85,22 @@ public class ExternalWeaponController : MonoBehaviour {
             player.UpdateReload(reloadTime, reloading);
         }
     }
-
-    public void Aim(float direction) {
-        targetDirection = direction;
-    }
-
-    void Fire() {
+    public void Attack(float x, float y, float rotation, int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage) {
         cooldown = timeBetweenShots;
         burstRemaining--;
         showMuzzleFlash();
-        for (int i = 0; i < attackCount; i++) {
-            float weaponRotation = transform.rotation.eulerAngles.z;
-            playerRb.AddForce(new Vector2(
-                -Mathf.Cos(Mathf.Deg2Rad * weaponRotation),
-                -Mathf.Sin(Mathf.Deg2Rad * weaponRotation)
-            ) * recoil);
-        }
+
+        player.UpdateAmmo(ammoCount);
+        Projectile projectile = ObjectPool<Projectile>.Get();
+        projectile.transform.position = new Vector3(x, y, projectile.transform.position.z);
+        projectile.transform.rotation = Quaternion.Euler(0f, 0f, rotation);
+
+        projectile.Fire(lifeTime, velocity, acceleration, gravity, knockback, damage);
+
+        playerRb.AddForce(new Vector2(
+            -Mathf.Cos(Mathf.Deg2Rad * rotation),
+            -Mathf.Sin(Mathf.Deg2Rad * rotation)
+        ) * recoil);
         barrelAnimator.Play("Recoil", 0, 0);
         if (burstRemaining > 0) {
             barrelAnimator.speed = 50f / Mathf.Max(burstTimeBetweenShots, 0.5f);
@@ -108,10 +108,14 @@ public class ExternalWeaponController : MonoBehaviour {
             barrelAnimator.speed = 50f / Mathf.Max(timeBetweenShots, 0.5f);
         }
 
+
         if (ammoCount <= 0 && reloading <= 0) {
             reloading = reloadTime;
         }
-        player.UpdateAmmo(ammoCount);
+    }
+
+    public void Aim(float direction) {
+        targetDirection = direction;
     }
 
     void showMuzzleFlash() {

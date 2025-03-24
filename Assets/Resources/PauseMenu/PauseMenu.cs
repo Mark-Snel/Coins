@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using TMPro;
 
 public class PauseMenu : MonoBehaviour{
     private Camera mainCam;
@@ -9,6 +11,7 @@ public class PauseMenu : MonoBehaviour{
     private Vector3 originalExitPosition;
     private Vector3 originalResumePosition;
     private GameObject DCText;
+    private TMP_Text infoText;
     public bool locked { get; private set; }
     private bool active = false;
     public bool Active {
@@ -63,10 +66,19 @@ public class PauseMenu : MonoBehaviour{
             Debug.LogWarning("Exit button not found.");
         }
         DCText = transform.Find("Canvas").Find("DC").gameObject;
+        infoText = transform.Find("Canvas").transform.Find("Info").Find("Text").GetComponent<TMP_Text>();
     }
 
     void Start() {
         AttachToMainCamera();
+    }
+
+    void FixedUpdate() {
+        if (infoText) {
+            infoText.text = $"Received players ids: {string.Join(", ", GameController.ReceivedPlayerList ?? new byte[0])}\n" +
+               $"Received players: {string.Join(", ", GameController.ReceivedPlayers ?? new HashSet<byte>())}\n" +
+               $"Spawned players: {GameController.GetPlayers() ?? "None"}";
+        }
     }
 
     void Update() {

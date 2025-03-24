@@ -3,20 +3,27 @@ using UnityEngine.SceneManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 public class GameController : MonoBehaviour {
-    private static GameObject externalPlayerPrefab;
+    public static byte[] ReceivedPlayerList; // for pause menu info
+    public static HashSet<byte> ReceivedPlayers= new HashSet<byte>(); // for pause menu info
+
+    public GameObject externalPlayerPrefab;
     public static byte? playerId = null;
     public static GameController Instance { get; private set; }
 
     private static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
+    public static string GetPlayers() {
+        return string.Join(", ", externalPlayers.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+    }
 
     private static CoinsMap nextMap = CoinsMap.None;
     private static CoinsMap currentMap = CoinsMap.None;
     private GameObject[] respawnPoints;
 
     void Unload() {
-        ProjectilePool.Reset();
+        ObjectPool<Projectile>.Reset();
         GameObject.FindGameObjectWithTag("Player")?.GetComponent<PlayerController>().Delete();
         foreach (var player in externalPlayers.Values) {
             player.Delete();
@@ -42,7 +49,6 @@ public class GameController : MonoBehaviour {
         Instance = this;
         DontDestroyOnLoad(gameObject);
         PauseMenuController.Initialize();
-        externalPlayerPrefab = Resources.Load<GameObject>("Player/ExternalPlayer/ExternalPlayer");
     }
 
     public void Respawn() {
@@ -85,6 +91,8 @@ public class GameController : MonoBehaviour {
     }
 
     public static void ExternalPlayer(byte[] data, int index) {
+        if (Instance == null) return;
+        ReceivedPlayers.Add(data[index + PlayerPacker.PacketLength - 1]);
         ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(data);
 
         if (playerId == null || currentMap == CoinsMap.None) return;
@@ -121,13 +129,11 @@ public class GameController : MonoBehaviour {
 
         ExternalPlayerController player;
         if (!externalPlayers.TryGetValue(id, out player)) {
-            if(externalPlayerPrefab == null)
-            {
-                Debug.LogError("ExternalPlayer prefab not found in Resources/Player/");
+            GameObject newPlayer = GameObject.Instantiate(Instance.externalPlayerPrefab, position, Quaternion.identity);
+            player = newPlayer.GetComponent<ExternalPlayerController>();
+            if (player == null || newPlayer == null) {
                 return;
             }
-            GameObject newPlayer = GameObject.Instantiate(externalPlayerPrefab, position, Quaternion.identity);
-            player = newPlayer.GetComponent<ExternalPlayerController>();
             player.playerId = id;
             externalPlayers.Add(id, player);
             player.transform.position = new Vector3(position.x, position.y, player.transform.position.z);
@@ -160,7 +166,27 @@ public class GameController : MonoBehaviour {
         player.UpdateForce(force);
     }
 
+    public static void ShotsFired(byte[] data, int index, int count, byte playerId) {
+        if (externalPlayers.TryGetValue(playerId, out ExternalPlayerController player)) {
+            for (int i = 0; i < count; i++) {
+                float x = BitConverter.ToSingle(data, index); index += 4;
+                float y = BitConverter.ToSingle(data, index); index += 4;
+                float rotation = BitConverter.ToSingle(data, index); index += 4;
+                int lifeTime = BitConverter.ToInt32(data, index); index += 4;
+                float velocity = BitConverter.ToSingle(data, index); index += 4;
+                float acceleration = BitConverter.ToSingle(data, index); index += 4;
+                float gravity = BitConverter.ToSingle(data, index); index += 4;
+                float knockback = BitConverter.ToSingle(data, index); index += 4;
+                int damage = BitConverter.ToInt32(data, index); index += 4;
+
+                player.Weapon.Attack(x, y, rotation, lifeTime, velocity, acceleration, gravity, knockback, damage);
+            }
+        }
+    }
+
     public static void CheckPlayers(byte[] data, int index, byte count) {
+        ReceivedPlayerList = new byte[count];
+        Array.Copy(data, index, ReceivedPlayerList, 0, count);
 
         bool[] receivedIds = new bool[256];
 
@@ -171,6 +197,10 @@ public class GameController : MonoBehaviour {
 
         List<byte> keysToRemove = null;
         foreach (var kvp in externalPlayers) {
+            if (kvp.Value == null) {
+                Debug.LogWarning("Hallo Coen!");
+                externalPlayers.Remove(kvp.Key);
+            }
             if (!receivedIds[kvp.Key]) {
                 if (keysToRemove == null)
                     keysToRemove = new List<byte>();

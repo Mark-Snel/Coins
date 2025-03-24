@@ -10,6 +10,7 @@ let nextMap = Maps.LOBBY;
 
 let nextWSId = 0;
 const players = new Map();
+const shots = new Map();
 let playerIdsPacket = Buffer.from([5, 0]);
 const clients = new Map();
 
@@ -18,7 +19,6 @@ const udpSocket = await Bun.udpSocket({
     port: 1070,
     socket: {
         data(socket, buf, port, addr) {
-            // For UDP, use a key like "udp:127.0.0.1:1070"
             const key = `udp:${addr}:${port}`;
             let client = clients.get(key);
             if (!client) {
@@ -30,7 +30,6 @@ const udpSocket = await Bun.udpSocket({
                     pingTime: Date.now(),
                     ping: null,
                     playerId: null,
-                    // For UDP, sending means calling the UDP socket send
                     send: (data) => {
                         socket.send(data, port, addr);
                     }
@@ -173,10 +172,25 @@ setInterval(() => {
     });
     clients.forEach((client) => {
         if (client.playerId !== null) {
-            const clientSpecificPacket = Buffer.concat([packet, Buffer.from([4, client.playerId])]);
+            let shotDataArray = [];
+            shots.forEach((shotBuffer, shotPlayerId) => {
+                if (shotPlayerId !== client.playerId) {
+                    const playerIdBuffer = Buffer.from([shotPlayerId]);
+                    const shotBufferWithId = Buffer.concat([playerIdBuffer, shotBuffer]);
+                    shotDataArray.push(shotBufferWithId);
+                }
+            });
+            let shotsPacket = Buffer.alloc(0);
+            if (shotDataArray.length > 0) {
+                const identifierBuffer = Buffer.alloc(1);
+                identifierBuffer.writeUInt8(6, 0);
+                shotsPacket = Buffer.concat([identifierBuffer, ...shotDataArray]);
+            }
+            const clientSpecificPacket = Buffer.concat([packet, shotsPacket, Buffer.from([4, client.playerId])]);
             client.send(clientSpecificPacket);
         }
     });
+    shots.clear();
 }, 20);
 
 // --- Command Line Interface ---
@@ -220,6 +234,13 @@ rl.on("line", (input) => {
                 console.log(`Key: ${key}, Player ID: ${value.playerId}`);
             });
             console.log(players.keys());
+            break;
+        case "shots":
+            console.log(`Total players with shots: ${shots.size}`);
+            for (const [playerId, shotPacket] of shots.entries()) {
+                const count = shotPacket.readInt32LE(0);
+                console.log(`Player ${playerId} has ${count} shots.`);
+            }
             break;
         default:
             log(`unrecognized command: ${input}`);
@@ -279,16 +300,54 @@ const Deserialize = [
             }
 
             // If there's more data left, continue deserializing
-            if (nextData.length > 0) {
-                const nextIndex = nextData[0];
-                const nextRemainingData = nextData.slice(1);
-                if (Deserialize[nextIndex]) {
-                    Deserialize[nextIndex](client, nextRemainingData);
-                }
+            continueDeserializing(client, nextData);
+        }
+    },
+    // 4 = shots
+    (client, remainingData) => {
+        if (client.playerId !== null) {
+            const count = remainingData.readInt32LE(0);
+            const totalLength = 4 + 36 * count;
+
+            if (remainingData.length < totalLength) {
+                return;
             }
+
+            const shotPacket = remainingData.slice(0, totalLength);
+            if (shots.has(client.playerId)) {
+                const prevBuffer = shots.get(client.playerId);
+                const prevCount = prevBuffer.readInt32LE(0);
+                const prevShots = prevBuffer.slice(4);
+
+                const newShots = shotPacket.slice(4);
+
+                const totalCount = prevCount + count;
+                const combinedBuffer = Buffer.alloc(4 + prevShots.length + newShots.length);
+                combinedBuffer.writeInt32LE(totalCount, 0);
+                prevShots.copy(combinedBuffer, 4);
+                newShots.copy(combinedBuffer, 4 + prevShots.length);
+
+                shots.set(client.playerId, combinedBuffer);
+            } else {
+                shots.set(client.playerId, shotPacket);
+            }
+
+
+            const nextData = remainingData.slice(totalLength);
+            continueDeserializing(client, nextData);
         }
     }
 ];
+
+function continueDeserializing(client, nextData) {
+    if (nextData.length > 0) {
+        const nextIndex = nextData[0];
+        const nextRemainingData = nextData.slice(1);
+        if (Deserialize[nextIndex]) {
+            Deserialize[nextIndex](client, nextRemainingData);
+        }
+    }
+}
 
 const PLAYER_DATA_SIZE = 85;
 

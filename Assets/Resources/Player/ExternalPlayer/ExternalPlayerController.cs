@@ -49,6 +49,7 @@ public class ExternalPlayerController : MonoBehaviour
         set {
             if (maxHealth != value) {
                 maxHealth = value;
+                hud?.UpdateHealth(health, maxHealth);
                 UpdateSizeAndMass();
             }
         }
@@ -79,6 +80,7 @@ public class ExternalPlayerController : MonoBehaviour
                 if (health <= 0) {
                     IsDead = true;
                 }
+                hud?.UpdateHealth(health, maxHealth);
             }
         }
     }
@@ -169,6 +171,8 @@ public class ExternalPlayerController : MonoBehaviour
     private void ProcessDeath() {
         if (rb && cl) {
             if (isDead) {
+                hud?.gameObject.SetActive(false);
+                weapon?.gameObject.SetActive(false);
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
                 rb.simulated = false;
@@ -176,6 +180,8 @@ public class ExternalPlayerController : MonoBehaviour
                 sr.enabled = false;
                 isr.enabled = false;
             } else {
+                hud?.gameObject.SetActive(true);
+                weapon?.gameObject.SetActive(true);
                 health = MaxHealth;
                 rb.simulated = true;
                 cl.enabled = true;

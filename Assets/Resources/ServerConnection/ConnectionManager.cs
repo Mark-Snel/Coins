@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 /*Client sent packets:
  0 *= pong
- 1 = connect
- 2 = disconnect
+ 1 =
+ 2 = roundOverConfirm
  3 = playerdata
  4 = shots
  5 = hits
  */
 /*Server sent packets:
  0 *= ping
- 1 = connect response
+ 1 =
  2 = current map
  3 = playerdata
  4 = playerId
@@ -22,10 +22,12 @@ using System.Threading.Tasks;
  6 = shots
  7 = hits
  8 = roundOverData
+ 9 = newRound
  */
 
 public class ConnectionManager {
     private static IConnection connection;
+    public static bool sendUpdates {get; private set;} = true;
 
     static ConnectionManager() {
         Application.quitting += OnApplicationQuit;
@@ -76,15 +78,17 @@ public class ConnectionManager {
 
         Dispatcher.ClearFixedUpdate();
         Dispatcher.OnFixedUpdate += () => {
-            List<byte> packet = new List<byte>();
+            if (ConnectionManager.sendUpdates) {
+                List<byte> packet = new List<byte>();
 
-            PlayerController.GetDataPacker()?.GetPacket(packet);
-            WeaponPacker.GetShotsPacket(packet);
-            WeaponPacker.GetHitsPacket(packet);
+                PlayerController.GetDataPacker()?.GetPacket(packet);
+                WeaponPacker.GetShotsPacket(packet);
+                WeaponPacker.GetHitsPacket(packet);
 
-            if (packet.Count > 0) {
-                byte[] finalPacket = packet.ToArray();
-                connection.Send(finalPacket);
+                if (packet.Count > 0) {
+                    byte[] finalPacket = packet.ToArray();
+                    connection.Send(finalPacket);
+                }
             }
         };
         try {
@@ -152,6 +156,18 @@ public class ConnectionManager {
                 index += length * WeaponPacker.PerHitPacketSize;
             }
             continueDeserializing(data, index);
+        },
+        (byte[] data, int index) => { //roundOverData
+            byte coins = data[index++];
+            byte winnerId = data[index++];
+            GameController.RoundOver(coins, winnerId);
+            ConnectionManager.sendUpdates = false;
+            _ = connection.Send(new byte[] {2});
+            continueDeserializing(data, index);
+        },
+        (byte[] data, int index) => { //newRound
+            ConnectionManager.sendUpdates = true;
+            GameController.NewRound();
         }
     };
 

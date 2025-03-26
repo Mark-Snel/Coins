@@ -5,6 +5,7 @@ using static ColorManager;
 
 public class PlayerController : MonoBehaviour {
     public static PlayerController Instance { get; private set; }
+    public static bool BlockInputs = false;
 
     [SerializeField] private bool isDead = true;
     [SerializeField] private int color = 11;
@@ -197,7 +198,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
-        if (!isDead) {
+        if (!isDead && !BlockInputs) {
             UpdateKeyState(jumpAction, ref jumpState);
             weapon?.Attack(
                 GetRotationToCursor(transform.position, aimAction, Camera.main),

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Linq;
 
 public class GameController : MonoBehaviour {
+    public static int coins = 0;
     public static bool FaultyClient {
         get; private set;
     }
@@ -53,8 +54,30 @@ public class GameController : MonoBehaviour {
         PauseMenuController.Initialize();
     }
 
-    public void Respawn() {
+    public static void RoundOver(byte retrievedCoins, byte winnerId) {
+        coins += retrievedCoins;
+        PlayerController.BlockInputs = true;
+    }
+    public static void NewRound() {
+        PlayerController.BlockInputs = false;
+        Respawn();
+    }
 
+    public static void Respawn() {
+        GameObject[] respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
+
+        if (respawnPoints == null || respawnPoints.Length == 0 || playerId == null) {
+            Debug.LogWarning("Respawn failed: No respawn points found or playerId is null.");
+            return;
+        }
+
+        Array.Sort(respawnPoints, (a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+
+        int index = playerId.Value % respawnPoints.Length;
+        Vector3 respawnPos = respawnPoints[index].transform.position;
+
+        PlayerController.Instance.transform.position = new Vector3(respawnPos.x, respawnPos.y, PlayerController.Instance.transform.position.z);
+        PlayerController.Instance.IsDead = false;
     }
 
     public static void CheckMap(byte mapIndex) {

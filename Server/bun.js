@@ -8,6 +8,9 @@ const Maps = Object.freeze({
 let currentMap = Maps.LOBBY;
 let nextMap = Maps.LOBBY;
 
+let newRoundTimeout = 0;
+let clientsToKick = null;
+
 const deathTracker = new DeathTracker();
 
 const players = new Map();
@@ -142,13 +145,29 @@ setInterval(() => {
 
 // Send map and player data periodically.
 setInterval(() => {
+    if (newRoundTimeout > 0) {
+        newRoundTimeout--;
+        if (newRoundTimeout <= 0) {
+            for (const clientKey of clientsToKick) {
+                deleteClient(clientKey);
+            }
+            clients.forEach((client) => {
+                client.send(Buffer.from([9]));
+                client.died = false;
+            });
+            deathTracker.reset();
+        } else if (!clientsToKick || clientsToKick.size === 0) {
+            newRoundTimeout = Math.min(newRoundTimeout, 150);
+        }
+        return;
+    }
     let roundComplete = false;
     if (players.size === 1) {
-        if (deathTracker.getDeathOrder().length > 0) {
+        if (deathTracker.getCount() > 0) {
             roundComplete = true;
         }
     } else if (players.size > 1) {
-        if (deathTracker.GetDeathOrder().length >= players.size - 1) {
+        if (deathTracker.getCount() >= players.size - 1) {
             roundComplete = true;
         }
     }
@@ -191,18 +210,19 @@ setInterval(() => {
                 identifierBuffer.writeUInt8(hitDataArray.length, 1);
                 hitsPacket = Buffer.concat([identifierBuffer, ...hitDataArray]);
             }
-
+            let roundOverPacket = Buffer.alloc(0);
             if (roundComplete) {
-                let roundOverPacket = Buffer.from([8, Math.min(deathTracker.getDeathOrder(client.playerId) + 1, 3), deathTracker.getWinner()]);
+                roundOverPacket = Buffer.from([8, Math.min(deathTracker.getDeathOrder(client.playerId) + 1, 3), deathTracker.getWinner()]);
             }
 
-            const clientSpecificPacket = Buffer.concat([packet, shotsPacket, hitsPacket, Buffer.from([4, client.playerId])]);
+            const clientSpecificPacket = Buffer.concat([packet, roundOverPacket, shotsPacket, hitsPacket, Buffer.from([4, client.playerId])]);
             client.send(clientSpecificPacket);
         }
     });
     if (roundComplete) {
-        deathTracker.reset();
-        Log("Round Completed");
+        log(`Round Completed, Winner: ${deathTracker.getWinner()}`);
+        newRoundTimeout = 500;
+        clientsToKick = new Set(clients.keys());
     }
     shots.clear();
     hits.clear();
@@ -284,9 +304,12 @@ const Deserialize = [
     (client, remainingData) => {
 
     },
-    // 2 = disconnect
+    // 2 = roundOverConfirm
     (client, remainingData) => {
-
+        if (clientsToKick) {
+            clientsToKick.delete(client.key);
+        }
+        continueDeserializing(client, remainingData);
     },
     // 3 = playerdata
     (client, remainingData) => {
@@ -448,6 +471,9 @@ class DeathTracker {
         }
         this.lastAddedPlayer = playerId;
     }
+    getCount() {
+        return this.index;
+    }
     getDeathOrder(playerId) {
         return this.deaths.get(playerId);
     }
@@ -467,8 +493,8 @@ class DeathTracker {
                 }
             }
 
-            if (!alivePlayer && Object.keys(this.players).length === 1) {
-                alivePlayer = Object.keys(this.players)[0];
+            if (!alivePlayer && Object.keys(players).length === 1) {
+                alivePlayer = Object.keys(players)[0];
             } else if (!alivePlayer) {
                 alivePlayer = this.lastAddedPlayer;
             }

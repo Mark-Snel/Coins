@@ -42,7 +42,7 @@ public class WeaponController : MonoBehaviour {
     private Rigidbody2D playerRb;
     private Transform barrel;
     private Animator barrelAnimator;
-    private SpriteRenderer baseSprite;
+    public SpriteRenderer baseSprite;
     private SpriteRenderer flashSprite;
     public Sprite[] muzzleFlashSprites;
     private float muzzleFlashTime = 0.02f;//in seconds
@@ -70,7 +70,6 @@ public class WeaponController : MonoBehaviour {
 
     void Start() {
         player = transform.parent.GetComponent<PlayerController>();
-        baseSprite = transform.Find("Base")?.GetComponent<SpriteRenderer>();
         flashSprite = transform.Find("Flash")?.GetComponent<SpriteRenderer>();
         playerRb = transform.parent.GetComponent<Rigidbody2D>();
         barrel = transform.Find("Barrel");
@@ -120,8 +119,8 @@ public class WeaponController : MonoBehaviour {
         cooldown = timeBetweenShots;
         burstRemaining--;
         showMuzzleFlash();
+        ammoCount--;
         for (int i = 0; i < attackCount; i++) {
-            ammoCount--;
             Projectile projectile = ObjectPool<Projectile>.Get();
             float weaponRotation = transform.rotation.eulerAngles.z;
             float spreadAngle = Random.Range(-spread / 2f, spread / 2f);
@@ -134,11 +133,13 @@ public class WeaponController : MonoBehaviour {
             Vector2 finalProjectileVelocity = projectileBaseVelocity + playerVelocity * inheritInertia;
 
             float finalRotation = Mathf.Rad2Deg * Mathf.Atan2(finalProjectileVelocity.y, finalProjectileVelocity.x);
-            projectile.transform.position = new Vector3(transform.position.x, transform.position.y, projectile.transform.position.z);
+            projectile.transform.position = new Vector3(playerRb.position.x, playerRb.position.y, projectile.transform.position.z);
             projectile.transform.rotation = Quaternion.Euler(0f, 0f, finalRotation);
 
-            projectile.Fire(attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage);
-            WeaponPacker.AddShot(transform.position.x, transform.position.y, finalRotation, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage);
+            int projectileId = Projectile.ProjectileIdCounter++;
+            if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+            projectile.Fire(GameController.playerId ?? 255, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage, projectileId);
+            WeaponPacker.AddShot(playerRb.position.x, playerRb.position.y, finalRotation, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage, projectileId);
             playerRb.AddForce(new Vector2(
                 -Mathf.Cos(Mathf.Deg2Rad * weaponRotation),
                 -Mathf.Sin(Mathf.Deg2Rad * weaponRotation)

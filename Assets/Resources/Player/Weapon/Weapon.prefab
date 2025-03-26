@@ -61,6 +61,9 @@ MonoBehaviour:
   attackVelocity: 10
   attackAcceleration: 0
   attackGravity: 0.5
+  knockback: 0
+  damage: 30
+  baseSprite: {fileID: 422711385728337415}
   muzzleFlashSprites:
   - {fileID: 7364241777980657426, guid: 3d4086ae5b8bb12c48cf1267a85b4fcf, type: 3}
   - {fileID: -3937160477127984794, guid: b5870165c3cb1d94e9eaf603c751e696, type: 3}

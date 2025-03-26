@@ -76,8 +76,8 @@ public class PauseMenu : MonoBehaviour{
     void FixedUpdate() {
         if (infoText) {
             infoText.text = $"Received players ids: {string.Join(", ", GameController.ReceivedPlayerList ?? new byte[0])}\n" +
-               $"Received players: {string.Join(", ", GameController.ReceivedPlayers ?? new HashSet<byte>())}\n" +
-               $"Spawned players: {GameController.GetPlayers() ?? "None"}";
+               $"Spawned players: {GameController.GetPlayers() ?? "None"}" +
+               (GameController.FaultyClient ? "Faulty client detected, you may experience lag. I believe this is a unity bug" : "");
         }
     }
 

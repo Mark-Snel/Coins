@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 /*Client sent packets:
  0 *= pong
@@ -9,6 +10,7 @@ using System.Collections.Generic;
  2 = disconnect
  3 = playerdata
  4 = shots
+ 5 = hits
  */
 /*Server sent packets:
  0 *= ping
@@ -18,20 +20,12 @@ using System.Collections.Generic;
  4 = playerId
  5 = playerIdList
  6 = shots
+ 7 = hits
+ 8 = roundOverData
  */
 
 public class ConnectionManager {
     private static IConnection connection;
-
-    public static void Disconnected() {
-        PauseMenuController.GameDisconnected();
-        OnlineButton.FailConnection();
-    }
-    public static void Connected() {
-        OnlineButton.SucceedConnection();
-    }
-    public static void Connecting() {
-    }
 
     static ConnectionManager() {
         Application.quitting += OnApplicationQuit;
@@ -43,30 +37,50 @@ public class ConnectionManager {
         }
     }
 
-    public static void Connect(string address) {
-        if (connection != null) {
-            connection.Disconnect();
-        }
-        #if UNITY_WEBGL
-            connection = new WebSocketConnection();
-        #else
-            connection = new UdpConnection();
-        #endif
-        Debug.Log("Using connection type: " + connection.GetType().Name);
-        connection.OnDataReceived += (byte[] receivedData) => {
-            byte packetType = receivedData[0];
+    private static Action<byte[]> onDataReceivedHandler = (byte[] receivedData) => {
+        byte packetType = receivedData[0];
 
-            if (packetType >= 0 && packetType < Deserialize.Length && Deserialize[packetType] != null) {
-                Deserialize[packetType].Invoke(receivedData, 1);
-            }
-        };
+        if (packetType >= 0 && packetType < Deserialize.Length && Deserialize[packetType] != null) {
+            Deserialize[packetType].Invoke(receivedData, 1);
+        }
+    };
+
+    private static Action<ConnectionStatus> OnStatusChangedHandler = (ConnectionStatus status) => {
+        Debug.Log("Connection OnStatusChanged " + status);
+        switch (status) {
+            case ConnectionStatus.Connected:
+                OnlineButton.SucceedConnection();
+                break;
+            case ConnectionStatus.Connecting:
+                OnlineButton.StartConnecting();
+                break;
+            case ConnectionStatus.Disconnected:
+                OnlineButton.FailConnection();
+                PauseMenuController.GameDisconnected();
+                break;
+        }
+    };
+
+    public static async Task Connect(string address) {
         Dispatcher.Initialize();
+        if (connection != null) {
+            await connection.Disconnect();
+        } else {
+            connection = new WebSocketConnection();
+        }
+        connection.OnDataReceived -= onDataReceivedHandler;
+        connection.OnDataReceived += onDataReceivedHandler;
+
+        connection.OnStatusChanged -= OnStatusChangedHandler;
+        connection.OnStatusChanged += OnStatusChangedHandler;
+
         Dispatcher.ClearFixedUpdate();
         Dispatcher.OnFixedUpdate += () => {
             List<byte> packet = new List<byte>();
 
             PlayerController.GetDataPacker()?.GetPacket(packet);
             WeaponPacker.GetShotsPacket(packet);
+            WeaponPacker.GetHitsPacket(packet);
 
             if (packet.Count > 0) {
                 byte[] finalPacket = packet.ToArray();
@@ -74,9 +88,9 @@ public class ConnectionManager {
             }
         };
         try {
-            connection.Connect(address);
+            await connection.Connect(address);
         } catch {
-            connection.Disconnect();
+            await connection.Disconnect();
         }
     }
 
@@ -90,7 +104,7 @@ public class ConnectionManager {
             connection.Send(pong);
         },
         (byte[] data, int index) => {//connect response
-            connection.Connected();
+            Debug.LogWarning("Huh? connection response? That shouldn't happen!");
         },
         (byte[] data, int index) => {//current map
             byte mapId = data[index];
@@ -116,16 +130,29 @@ public class ConnectionManager {
             index += length;
             continueDeserializing(data, index);
         },
-        (byte[] data, int index) => { // shots
-            byte playerId = data[index++];
-            int length = BitConverter.ToInt32(data, index);
-            index += 4;
-            int shotsIndex = index;
-            GameController.ShotsFired(data, shotsIndex, length, playerId);
-            index += length * WeaponPacker.PerShotPacketSize;
+        (byte[] data, int index) => { //shots
+            byte count = data[index++];
+            for (byte i = 0; i < count; i++) {
+                byte playerId = data[index++];
+                int length = BitConverter.ToInt32(data, index);
+                index += 4;
+                int shotsIndex = index;
+                GameController.ShotsFired(data, shotsIndex, length, playerId);
+                index += length * WeaponPacker.PerShotPacketSize;
+            }
             continueDeserializing(data, index);
         },
-
+        (byte[] data, int index) => { //hits
+            byte count = data[index++];
+            for (byte i = 0; i < count; i++) {
+                int length = BitConverter.ToInt32(data, index);
+                index += 4;
+                int hitsIndex = index;
+                GameController.RegisterHits(data, hitsIndex, length);
+                index += length * WeaponPacker.PerHitPacketSize;
+            }
+            continueDeserializing(data, index);
+        }
     };
 
     private static void continueDeserializing(byte[] data, int index) {

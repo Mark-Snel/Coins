@@ -9,6 +9,9 @@ public class WeaponPacker : MonoBehaviour {
     private static int shotCount = 0;
     private static List<byte> shots = new List<byte>();
 
+    private static int hitCount = 0;
+    private static List<byte> hits = new List<byte>();
+
     void Awake() {
         weapon = GetComponent<WeaponController>();
         if (weapon == null)
@@ -50,9 +53,10 @@ public class WeaponPacker : MonoBehaviour {
     //4 bytes - float gravity
     //4 bytes - float knockback
     //4 bytes - int damage
+    //4 bytes - int projectileId
 
-    //1 + 4 + 36x
-    public static void AddShot(float x, float y, float rotation, int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage) {
+    //1 + 4 + 40x
+    public static void AddShot(float x, float y, float rotation, int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage, int projectileId) {
         shots.AddRange(BitConverter.GetBytes(x));
         shots.AddRange(BitConverter.GetBytes(y));
         shots.AddRange(BitConverter.GetBytes(rotation));
@@ -62,9 +66,10 @@ public class WeaponPacker : MonoBehaviour {
         shots.AddRange(BitConverter.GetBytes(gravity));
         shots.AddRange(BitConverter.GetBytes(knockback));
         shots.AddRange(BitConverter.GetBytes(damage));
+        shots.AddRange(BitConverter.GetBytes(projectileId));
         shotCount++;
     }
-    public static int PerShotPacketSize = 36;
+    public static int PerShotPacketSize = 40;
     public static void GetShotsPacket(List<byte> packet) {
         if (shotCount > 0) {
             packet.Add(4); //id
@@ -72,6 +77,37 @@ public class WeaponPacker : MonoBehaviour {
             packet.AddRange(shots);
             shotCount = 0;
             shots.Clear();
+        }
+    }
+
+    //Hits packet structure:
+    //1 byte - id
+    //4 bytes - int count of hits
+    //then for each hit:
+    //8 bytes - vec2 knockback
+    //4 bytes - int damage
+    //1 byte - int fromPlayerId
+    //4 bytes - int projectile id
+    //1 byte - int toPlayerId
+
+    //1 + 4 + 18x
+    public static int PerHitPacketSize = 18;
+    public static void AddHit(Vector2 knockback, int damage, byte fromPlayerId, int projectileId, byte toPlayerId) {
+        hits.AddRange(BitConverter.GetBytes(knockback.x));
+        hits.AddRange(BitConverter.GetBytes(knockback.y));
+        hits.AddRange(BitConverter.GetBytes(damage));
+        hits.Add(fromPlayerId);
+        hits.AddRange(BitConverter.GetBytes(projectileId));
+        hits.Add(toPlayerId);
+        hitCount++;
+    }
+    public static void GetHitsPacket(List<byte> packet) {
+        if (hitCount > 0) {
+            packet.Add(5); //id
+            packet.AddRange(BitConverter.GetBytes(hitCount));
+            packet.AddRange(hits);
+            hitCount = 0;
+            hits.Clear();
         }
     }
 }

@@ -13,7 +13,7 @@ public class ExternalPlayerController : MonoBehaviour
     [SerializeField] private float maxHealth_SizeMultiplier = 0.01f;
     [SerializeField] private int health;
     [SerializeField] private float interpolationFactor = 0.2f;
-    public int playerId;
+    public byte playerId;
 
     private float edgeSize = 0.04f;
 
@@ -116,6 +116,11 @@ public class ExternalPlayerController : MonoBehaviour
     }
     public void UpdateReload(int reloadTime, int reloadProgress) {
         hud.UpdateReload(reloadTime, reloadProgress);
+    }
+
+    public void Hit(Vector2 knockback, int damage, byte fromPlayerId, int projectileId) {
+        rb.AddForce(knockback);
+        WeaponPacker.AddHit(knockback, damage, fromPlayerId, projectileId, playerId);
     }
 
     void Start() {

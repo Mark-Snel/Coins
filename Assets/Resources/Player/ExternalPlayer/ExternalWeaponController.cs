@@ -85,7 +85,7 @@ public class ExternalWeaponController : MonoBehaviour {
             player.UpdateReload(reloadTime, reloading);
         }
     }
-    public void Attack(float x, float y, float rotation, int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage) {
+    public void Attack(byte fromPlayerId, float x, float y, float rotation, int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage, int projectileId) {
         cooldown = timeBetweenShots;
         burstRemaining--;
         showMuzzleFlash();
@@ -95,7 +95,7 @@ public class ExternalWeaponController : MonoBehaviour {
         projectile.transform.position = new Vector3(x, y, projectile.transform.position.z);
         projectile.transform.rotation = Quaternion.Euler(0f, 0f, rotation);
 
-        projectile.Fire(lifeTime, velocity, acceleration, gravity, knockback, damage);
+        projectile.Fire(fromPlayerId, lifeTime, velocity, acceleration, gravity, knockback, damage, projectileId);
 
         playerRb.AddForce(new Vector2(
             -Mathf.Cos(Mathf.Deg2Rad * rotation),

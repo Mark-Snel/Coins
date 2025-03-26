@@ -201,7 +201,7 @@ public class PlayerController : MonoBehaviour {
             UpdateKeyState(jumpAction, ref jumpState);
             weapon?.Attack(
                 GetRotationToCursor(transform.position, aimAction, Camera.main),
-                           GetKeyState(attackAction)
+                GetKeyState(attackAction)
             );
         }
     }
@@ -318,9 +318,16 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
+    public void Hit(Vector2 knockback, int damage, byte fromPlayerId, int projectileId) {
+        Health -= damage;
+        rb.AddForce(knockback);
+        if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+        WeaponPacker.AddHit(knockback, damage, fromPlayerId, projectileId, GameController.playerId.Value);
+    }
     public void Hit(Vector2 knockback, int damage) {
         Health -= damage;
         rb.AddForce(knockback);
+        if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
     }
 
     private Vector2 totalForce = Vector2.zero;

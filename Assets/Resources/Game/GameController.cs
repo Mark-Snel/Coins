@@ -6,8 +6,10 @@ using System.Runtime.InteropServices;
 using System.Linq;
 
 public class GameController : MonoBehaviour {
+    public static bool FaultyClient {
+        get; private set;
+    }
     public static byte[] ReceivedPlayerList; // for pause menu info
-    public static HashSet<byte> ReceivedPlayers= new HashSet<byte>(); // for pause menu info
 
     public GameObject externalPlayerPrefab;
     public static byte? playerId = null;
@@ -15,7 +17,7 @@ public class GameController : MonoBehaviour {
 
     private static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
     public static string GetPlayers() {
-        return string.Join(", ", externalPlayers.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+        return string.Join(", ", externalPlayers.Select(kvp => $"{kvp.Key}"));
     }
 
     private static CoinsMap nextMap = CoinsMap.None;
@@ -92,7 +94,6 @@ public class GameController : MonoBehaviour {
 
     public static void ExternalPlayer(byte[] data, int index) {
         if (Instance == null) return;
-        ReceivedPlayers.Add(data[index + PlayerPacker.PacketLength - 1]);
         ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(data);
 
         if (playerId == null || currentMap == CoinsMap.None) return;
@@ -178,8 +179,26 @@ public class GameController : MonoBehaviour {
                 float gravity = BitConverter.ToSingle(data, index); index += 4;
                 float knockback = BitConverter.ToSingle(data, index); index += 4;
                 int damage = BitConverter.ToInt32(data, index); index += 4;
+                int projectileId = BitConverter.ToInt32(data, index); index += 4;
 
-                player.Weapon.Attack(x, y, rotation, lifeTime, velocity, acceleration, gravity, knockback, damage);
+                player.Weapon.Attack(playerId, x, y, rotation, lifeTime, velocity, acceleration, gravity, knockback, damage, projectileId);
+            }
+        }
+    }
+
+    public static void RegisterHits(byte[] data, int index, int count) {
+        for (int i = 0; i < count; i++) {
+            float kbx = BitConverter.ToSingle(data, index); index += 4;
+            float kby = BitConverter.ToSingle(data, index); index += 4;
+            Vector2 knockback = new Vector2(kbx, kby);
+            int damage = BitConverter.ToInt32(data, index); index += 4;
+            byte fromPlayerId = data[index++];
+            int projectileId = BitConverter.ToInt32(data, index); index += 4;
+            byte toPlayerId = data[index++];
+
+            if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+            if (ProjectileRegistry.RegisteredProjectiles.TryGetValue((fromPlayerId, projectileId), out Projectile projectile)) {
+                projectile.RegisterHit(knockback, damage, fromPlayerId, toPlayerId, playerId.Value);
             }
         }
     }
@@ -199,6 +218,7 @@ public class GameController : MonoBehaviour {
         foreach (var kvp in externalPlayers) {
             if (kvp.Value == null) {
                 Debug.LogWarning("Hallo Coen!");
+                FaultyClient = true;
                 externalPlayers.Remove(kvp.Key);
             }
             if (!receivedIds[kvp.Key]) {

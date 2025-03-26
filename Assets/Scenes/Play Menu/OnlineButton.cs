@@ -74,13 +74,19 @@ public class OnlineButton : MonoBehaviour
         }
     }
 
-    public void Submit() {
+    void Submit() {
         Dispatcher.Initialize();
         connectedIp = ipInput.text;
-        ConnectionManager.Connect(connectedIp);
-        feedback.ChangeText("Connecting...");
-        coinDecorator.Color = -1;
-        connecting = true;
+        _ = ConnectionManager.Connect(connectedIp);
+    }
+
+    public static void StartConnecting() {
+        OnlineButton instance = FindFirstObjectByType<OnlineButton>(0);
+        if (instance != null) {
+            instance.feedback.ChangeText("Connecting...");
+            instance.coinDecorator.Color = -1;
+            instance.connecting = true;
+        }
     }
 
     public static void FailConnection() {

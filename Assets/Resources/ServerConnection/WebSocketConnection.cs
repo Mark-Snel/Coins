@@ -5,88 +5,92 @@ using UnityEngine;
 
 public class WebSocketConnection : IConnection {
     public event Action<byte[]> OnDataReceived;
+    public event Action<ConnectionStatus> OnStatusChanged;
+    #if !UNITY_WEBGL || UNITY_EDITOR
+        private bool isTickSubscribed = false;
+    #endif
 
     private WebSocket webSocket;
-    public ConnectionStatus Status { get; private set; } = ConnectionStatus.Disconnected;
-
-    public async void Connect(string address) {
-        Dispatcher.OnUpdate += Tick;
-        Status = ConnectionStatus.Connecting;
-        Dispatcher.Enqueue(ConnectionManager.Connecting);
-
-        // Make sure the URL includes the proper protocol (ws://)
-        string url = "ws://" + address;
-        webSocket = new WebSocket(url);
-
-        // Set up event handlers
-        webSocket.OnOpen += () => {
-            Dispatcher.Enqueue(SendConnectMessage);
-        };
-
-        webSocket.OnError += (errorMsg) => {
-            Debug.Log("WebSocket Error: " + errorMsg);
-        };
-
-        webSocket.OnClose += (closeCode) => {
-            Status = ConnectionStatus.Disconnected;
-            Dispatcher.Enqueue(ConnectionManager.Disconnected);
-        };
-
-        webSocket.OnMessage += (bytes) => {
-            OnDataReceived?.Invoke(bytes);
-        };
-
-        try {
-            await webSocket.Connect();
-        } catch (Exception ex) {
-            Debug.Log("WebSocket Connection Failed: " + ex.Message);
-            Status = ConnectionStatus.Disconnected;
-            Dispatcher.Enqueue(ConnectionManager.Disconnected);
+    private ConnectionStatus status = ConnectionStatus.Disconnected;
+    public ConnectionStatus Status {
+        get => status;
+        private set {
+            if (status != value) {
+                status = value;
+                OnStatusChanged?.Invoke(status);
+            }
         }
     }
 
-    public void Connected() {
-        Dispatcher.Enqueue(() => {
-            GameController.Initialize();
-            Status = ConnectionStatus.Connected;
-            Dispatcher.Enqueue(ConnectionManager.Connected);
-        });
+    public async Task Connect(string address) {
+        #if !UNITY_WEBGL || UNITY_EDITOR
+            if (!isTickSubscribed) {
+                Dispatcher.OnUpdate += Tick;
+                isTickSubscribed = true;
+            }
+        #endif
+
+        if (Status == ConnectionStatus.Disconnected) {
+            Status = ConnectionStatus.Connecting;
+
+            string url = "ws://" + address;
+            webSocket = new WebSocket(url);
+
+            // Set up event handlers
+            webSocket.OnOpen += () => {
+                GameController.Initialize();
+                Dispatcher.Enqueue(() => {Status = ConnectionStatus.Connected;});
+            };
+
+            webSocket.OnError += (errorMsg) => {
+                Debug.Log("WebSocket Error: " + errorMsg);
+            };
+
+            webSocket.OnClose += (closeCode) => {
+                Dispatcher.Enqueue(() => {Status = ConnectionStatus.Disconnected;});
+            };
+
+            webSocket.OnMessage += (bytes) => {
+                OnDataReceived?.Invoke(bytes);
+            };
+
+            try {
+                await webSocket.Connect();
+            } catch (Exception ex) {
+                Debug.Log("WebSocket Connection Failed: " + ex.Message);
+                Dispatcher.Enqueue(() => {Status = ConnectionStatus.Disconnected;});
+            }
+        }
     }
 
-    public async void Disconnect() {
+    public async Task Disconnect() {
         if (webSocket != null) {
-            SendDisconnectMessage();
-            await webSocket.Close();
+            if (webSocket.State == WebSocketState.Open) {
+                await webSocket.Close();
+            } else if (webSocket.State == WebSocketState.Connecting) {
+                Debug.Log("Closed on connecting");
+                await webSocket.Close();
+            } else if (webSocket.State == WebSocketState.Closed) {
+                Status = ConnectionStatus.Disconnected;
+            } else {
+                Debug.LogError("Shit, i dunno, websocket didnt wanna close or sommet");
+            }
+        } else {
+            Status = ConnectionStatus.Disconnected;
         }
     }
 
-    public async void Send(byte[] data) {
+    public async Task Send(byte[] data) {
         if (webSocket != null && webSocket.State == WebSocketState.Open) {
             try {
                 await webSocket.Send(data);
             } catch (Exception ex) {
                 Debug.LogWarning("WebSocket send error: " + ex.Message);
-                Disconnect();
+                await Disconnect();
             }
         }
     }
 
-    // Sends an initial connect message (customize as needed).
-    private void SendConnectMessage() {
-        byte[] data = new byte[] { 1, 2, 0, 4, 4, 0, 1, 0, 2, 7, 1, 0, 7, 0 };
-        Send(data);
-    }
-
-    // Sends a disconnect message (customize as needed).
-    private void SendDisconnectMessage() {
-        if (Status == ConnectionStatus.Connected || Status == ConnectionStatus.Connecting) {
-            byte[] data = new byte[] { 2, 2, 0, 4, 4, 0, 1, 0, 2, 7, 3, 0, 7, 0 };
-            Send(data);
-        }
-    }
-
-    // IMPORTANT: On WebGL, NativeWebSocket requires you to call DispatchMessageQueue regularly.
-    // Expose this method so that a MonoBehaviour can call it from its Update() method.
     public void Tick() {
         #if !UNITY_WEBGL || UNITY_EDITOR
             webSocket?.DispatchMessageQueue();

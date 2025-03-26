@@ -13,12 +13,14 @@ public class Projectile : MonoBehaviour {
     private Vector3 finalPosition;
     private float targetRotation;
     private Vector3 oldPosition;
+    private Vector3 oldInterpolatedPosition;
     private float oldRotation;
 
     private float interpolation = 0;
     private float finalDistance = float.MaxValue;
     private bool killOnNextFrame = false;
     private bool ending = false;
+    private bool alreadyHit = false;
     private float surfaceNormal;
 
     private float targetTrailLength;
@@ -28,12 +30,32 @@ public class Projectile : MonoBehaviour {
 
     private Collider2D startCollider;
 
+    private byte fromPlayerId;
+    private int projectileId;
+    public int ProjectileId {
+        get {return projectileId;}
+        private set{}
+    }
+    public static int ProjectileIdCounter = 0;
+
     void Start() {
         SetTrail();
     }
 
-    public void Fire(int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage) {
+    public void RegisterHit(Vector2 knockback, int damage, byte fromPlayerId, byte toPlayerId, byte playerId) {
+        ending = true;
+        finalDistance = 0;
+        finalPosition = new Vector3(targetPosition.x, targetPosition.y, transform.position.z);
+        surfaceNormal = targetRotation - 180;
+        if (gameObject.activeInHierarchy && toPlayerId == playerId && !alreadyHit) {
+            PlayerController.Instance.Hit(knockback, damage);
+            alreadyHit = true;
+        }
+    }
+
+    public void Fire(byte fromPlayerId, int lifeTime, float velocity, float acceleration, float gravity, float knockback, int damage, int id) {
         SetTrail();
+        this.fromPlayerId = fromPlayerId;
         this.lifeTime = lifeTime;
         this.velocity = velocity/50f;
         this.acceleration = acceleration/50f;
@@ -47,6 +69,7 @@ public class Projectile : MonoBehaviour {
         targetTrailLength = defaultTrailScale.y;
         oldTrailLength = targetTrailLength;
         Tick(true);
+        ProjectileRegistry.RegisterProjectile(this, fromPlayerId, projectileId);
         Update();
     }
 
@@ -73,9 +96,18 @@ public class Projectile : MonoBehaviour {
                 impactEffect.transform.rotation = Quaternion.Euler(0f, 0f, surfaceNormal - 90);
                 impactEffect.Activate(0.03f);
             }
+            trail.localScale = new Vector3(
+                defaultTrailScale.x,
+                Mathf.Min(Mathf.Max(Mathf.Lerp(oldTrailLength, targetTrailLength, interpolationFactor), defaultTrailScale.y), Vector3.Distance(oldInterpolatedPosition, finalPosition)),
+                defaultTrailScale.z
+            );
             return;
         }
+
         transform.position = Vector3.Lerp(oldPosition, targetPosition, interpolationFactor);
+        if (finalDistance != float.MaxValue) {
+            oldInterpolatedPosition = transform.position;
+        }
         transform.rotation = Quaternion.Euler(0f, 0f, Mathf.LerpAngle(oldRotation, targetRotation, interpolationFactor));
         trail.localScale = new Vector3(defaultTrailScale.x, Mathf.Max(Mathf.Lerp(oldTrailLength, targetTrailLength, interpolationFactor), defaultTrailScale.y), defaultTrailScale.z);
     }
@@ -105,19 +137,19 @@ public class Projectile : MonoBehaviour {
 
         bool stillInside = false;
         foreach (RaycastHit2D hit in hits) {
-            if (firstHit) {
-                if (hit.distance == 0) {
-                    startCollider = hit.collider;
-                    stillInside = true;
-                     continue;
-                }
-            }
-            if (startCollider == hit.collider) {
+            if (firstHit && hit.distance == 0) {
+                startCollider = hit.collider;
                 stillInside = true;
+                firstHit = false;
                 continue;
             }
 
-            Hit(hit);
+            if (hit.collider != startCollider) {
+                Hit(hit);
+                return;
+            } else {
+                stillInside = true;
+            }
         }
         if (!stillInside) {
             startCollider = null;
@@ -135,11 +167,21 @@ public class Projectile : MonoBehaviour {
         finalPosition = new Vector3(hit.point.x, hit.point.y, transform.position.z);
         surfaceNormal = Mathf.Atan2(hit.normal.y, hit.normal.x) * Mathf.Rad2Deg;
         PlayerController player = hit.collider.GetComponent<PlayerController>();
-        if (player != null) {
+        if (player != null && !alreadyHit) {
             player.Hit(new Vector2(
                 Mathf.Cos(Mathf.Deg2Rad * targetRotation),
                 Mathf.Sin(Mathf.Deg2Rad * targetRotation)
-            ) * knockback, damage);
+            ) * knockback, damage, fromPlayerId, projectileId);
+            alreadyHit = true;
+        }
+
+        ExternalPlayerController externalPlayer = hit.collider.GetComponent<ExternalPlayerController>();
+        if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+        if (externalPlayer != null && fromPlayerId == GameController.playerId.Value) {
+            externalPlayer.Hit(new Vector2(
+                Mathf.Cos(Mathf.Deg2Rad * targetRotation),
+                Mathf.Sin(Mathf.Deg2Rad * targetRotation)
+            ) * knockback, damage, fromPlayerId, projectileId);
         }
     }
 
@@ -149,6 +191,7 @@ public class Projectile : MonoBehaviour {
         interpolation = 0;
         trail.localScale = defaultTrailScale;
         finalDistance = float.MaxValue;
+        ProjectileRegistry.UnregisterProjectile(fromPlayerId, projectileId);
         ObjectPool<Projectile>.Return(this);
     }
 }

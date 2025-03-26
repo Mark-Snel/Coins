@@ -44,7 +44,7 @@ public class PlayerPacker : MonoBehaviour {
 
     public void GetPacket(List<byte> packet) {
         //Identifier
-        packet.Add(3); //Look at UdpConnection, explains each identifier
+        packet.Add(3); //Look at ConnectionManager, explains each identifier
 
         //Pack bool isDead as a single byte (0 = false, 1 = true)
         packet.Add(player.IsDead ? (byte)1 : (byte)0);

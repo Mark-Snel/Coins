@@ -8,53 +8,24 @@ const Maps = Object.freeze({
 let currentMap = Maps.LOBBY;
 let nextMap = Maps.LOBBY;
 
-let nextWSId = 0;
+const deathTracker = new DeathTracker();
+
 const players = new Map();
 const shots = new Map();
+const hits = new Map();
 let playerIdsPacket = Buffer.from([5, 0]);
 const clients = new Map();
-
-// --- UDP Server Setup ---
-const udpSocket = await Bun.udpSocket({
-    port: 1070,
-    socket: {
-        data(socket, buf, port, addr) {
-            const key = `udp:${addr}:${port}`;
-            let client = clients.get(key);
-            if (!client) {
-                client = {
-                    type: "udp",
-                    key,
-                    addr,
-                    port,
-                    pingTime: Date.now(),
-                    ping: null,
-                    playerId: null,
-                    send: (data) => {
-                        socket.send(data, port, addr);
-                    }
-                };
-                clients.set(key, client);
-                log(`UDP client added: ${key}`);
-            }
-            client.pingTime = Date.now();
-            // Process the incoming UDP message.
-            const index = buf[0];
-            const remainingData = buf.slice(1);
-            if (Deserialize[index]) {
-                Deserialize[index](client, remainingData);
-            }
-        }
-    }
-});
-log(`UDP server running on port: ${udpSocket.port}`);
 
 // --- WebSocket Server Setup ---
 const wsSocket =Bun.serve({
     port: 1071,
     async fetch(req, server) {
         // Attempt to upgrade to WebSocket
-        if (server.upgrade(req)) {
+        if (server.upgrade(req, {
+            data: {
+                id: req.headers.get("sec-websocket-key")
+            }
+        })) {
             return;
         }
 
@@ -80,8 +51,9 @@ const wsSocket =Bun.serve({
     websocket: {
         open(ws) {
             // Assign a unique key for the WebSocket client.
-            const wsId = nextWSId++;
+            const wsId = ws.data.id;
             const key = `ws:${wsId}`;
+
             const client = {
                 type: "ws",
                 key,
@@ -89,13 +61,20 @@ const wsSocket =Bun.serve({
                 pingTime: Date.now(),
                 ping: null,
                 playerId: null,
-                // For WS, sending means calling ws.send.
                 send: (data) => {
                     ws.send(data);
-                }
+                },
+                died: false
             };
             clients.set(key, client);
             log(`WebSocket client added: ${key}`);
+            const takenIds = new Set([...clients.values()].map(client => client.playerId));
+            for (let i = 0; i < 256; i++) {
+                if (!takenIds.has(i)) {
+                    client.playerId = i;
+                    break;
+                }
+            }
         },
         message(ws, message) {
             // Find the client associated with this ws connection.
@@ -163,6 +142,17 @@ setInterval(() => {
 
 // Send map and player data periodically.
 setInterval(() => {
+    let roundComplete = false;
+    if (players.size === 1) {
+        if (deathTracker.getDeathOrder().length > 0) {
+            roundComplete = true;
+        }
+    } else if (players.size > 1) {
+        if (deathTracker.GetDeathOrder().length >= players.size - 1) {
+            roundComplete = true;
+        }
+    }
+
     let packet = Buffer.concat([Buffer.from([2, currentMap]), playerIdsPacket]);
     players.forEach((buffer, playerId) => {
         const prefix = Buffer.from([3]);
@@ -182,15 +172,40 @@ setInterval(() => {
             });
             let shotsPacket = Buffer.alloc(0);
             if (shotDataArray.length > 0) {
-                const identifierBuffer = Buffer.alloc(1);
+                const identifierBuffer = Buffer.alloc(2);
                 identifierBuffer.writeUInt8(6, 0);
+                identifierBuffer.writeUInt8(shotDataArray.length, 1);
                 shotsPacket = Buffer.concat([identifierBuffer, ...shotDataArray]);
             }
-            const clientSpecificPacket = Buffer.concat([packet, shotsPacket, Buffer.from([4, client.playerId])]);
+
+            let hitDataArray = [];
+            hits.forEach((hitBuffer, hitPlayerId) => {
+                if (hitPlayerId !== client.playerId) {
+                    hitDataArray.push(hitBuffer);
+                }
+            });
+            let hitsPacket = Buffer.alloc(0);
+            if (hitDataArray.length > 0) {
+                const identifierBuffer = Buffer.alloc(2);
+                identifierBuffer.writeUInt8(7, 0);
+                identifierBuffer.writeUInt8(hitDataArray.length, 1);
+                hitsPacket = Buffer.concat([identifierBuffer, ...hitDataArray]);
+            }
+
+            if (roundComplete) {
+                let roundOverPacket = Buffer.from([8, Math.min(deathTracker.getDeathOrder(client.playerId) + 1, 3), deathTracker.getWinner()]);
+            }
+
+            const clientSpecificPacket = Buffer.concat([packet, shotsPacket, hitsPacket, Buffer.from([4, client.playerId])]);
             client.send(clientSpecificPacket);
         }
     });
+    if (roundComplete) {
+        deathTracker.reset();
+        Log("Round Completed");
+    }
     shots.clear();
+    hits.clear();
 }, 20);
 
 // --- Command Line Interface ---
@@ -204,7 +219,6 @@ rl.on("line", (input) => {
     switch (args[0]) {
         case "exit":
             log("Shutting down...");
-            udpSocket.close();
             process.exit(0);
             break;
         case "map":
@@ -242,6 +256,14 @@ rl.on("line", (input) => {
                 console.log(`Player ${playerId} has ${count} shots.`);
             }
             break;
+        case "hits":
+            console.log(`Total players with hits: ${hits.size}`);
+            for (const [playerId, hitPacket] of hits.entries()) {
+                const count = hitPacket.readInt32LE(0);
+                console.log(`Player ${playerId} has ${count} hits.`);
+                console.log(hitPacket);
+            }
+            break;
         default:
             log(`unrecognized command: ${input}`);
             break;
@@ -250,7 +272,6 @@ rl.on("line", (input) => {
 
 // --- Message Deserialization ---
 // The Deserialize array holds functions for each message index.
-// We now use client.send instead of a UDP-specific send, and rely on client.key.
 const Deserialize = [
     // 0 = pong
     (client, remainingData) => {
@@ -261,27 +282,11 @@ const Deserialize = [
     },
     // 1 = connect
     (client, remainingData) => {
-        const expectedData = Buffer.from([2, 0, 4, 4, 0, 1, 0, 2, 7, 1, 0, 7, 0]);
-        if (remainingData.equals(expectedData)) {
-            client.send(Buffer.from([1]));
-            if (client.playerId === null) {
-                const takenIds = new Set([...clients.values()].map(client => client.playerId));
-                for (let i = 0; i < 256; i++) {
-                    if (!takenIds.has(i)) {
-                        client.playerId = i;
-                        break;
-                    }
-                }
-            }
-        }
+
     },
     // 2 = disconnect
     (client, remainingData) => {
-        const expectedData = Buffer.from([2, 0, 4, 4, 0, 1, 0, 2, 7, 3, 0, 7, 0]);
-        if (remainingData.equals(expectedData)) {
-            deleteClient(client.key);
-            log(`Client ${client.key} disconnected`);
-        }
+
     },
     // 3 = playerdata
     (client, remainingData) => {
@@ -291,6 +296,11 @@ const Deserialize = [
             }
             const playerData = remainingData.slice(0, PLAYER_DATA_SIZE);
             const nextData = remainingData.slice(PLAYER_DATA_SIZE);
+
+            if (playerData[0] === 1 && !client.died) {
+                deathTracker.addDeath(client.playerId);
+                client.died = true;
+            }
 
             if (!players.has(client.playerId)) {
                 players.set(client.playerId, playerData);
@@ -307,9 +317,9 @@ const Deserialize = [
     (client, remainingData) => {
         if (client.playerId !== null) {
             const count = remainingData.readInt32LE(0);
-            const totalLength = 4 + 36 * count;
+            const totalLength = 4 + 40 * count;
 
-            if (remainingData.length < totalLength) {
+            if (remainingData.length !== totalLength) {
                 return;
             }
 
@@ -330,6 +340,39 @@ const Deserialize = [
                 shots.set(client.playerId, combinedBuffer);
             } else {
                 shots.set(client.playerId, shotPacket);
+            }
+
+
+            const nextData = remainingData.slice(totalLength);
+            continueDeserializing(client, nextData);
+        }
+    },
+    // 5 = hits
+    (client, remainingData) => {
+        if (client.playerId !== null) {
+            const count = remainingData.readInt32LE(0);
+            const totalLength = 4 + 18 * count;
+            if (remainingData.length !== totalLength) {
+                return;
+            }
+
+            const hitPacket = remainingData.slice(0, totalLength);
+            if (hits.has(client.playerId)) {
+                const prevBuffer = hits.get(client.playerId);
+                const prevCount = prevBuffer.readInt32LE(0);
+                const prevHits = prevBuffer.slice(4);
+
+                const newHits = hitPacket.slice(4);
+
+                const totalCount = prevCount + count;
+                const combinedBuffer = Buffer.alloc(4 + prevHits.length + newHits.length);
+                combinedBuffer.writeInt32LE(totalCount, 0);
+                prevHits.copy(combinedBuffer, 4);
+                newHits.copy(combinedBuffer, 4 + prevHits.length);
+
+                hits.set(client.playerId, combinedBuffer);
+            } else {
+                hits.set(client.playerId, hitPacket);
             }
 
 
@@ -381,4 +424,57 @@ function playersUpdated() {
         playerIds.push(playerId);
     });
     playerIdsPacket = Buffer.from([5, playerIds.length, ...playerIds]);
+}
+
+
+
+
+
+
+
+
+
+// --- Gaming ---
+class DeathTracker {
+    constructor() {
+        this.index = 0;
+        this.deaths = new Map();
+        this.winner = null;
+        this.lastAddedPlayer = null;
+    }
+    addDeath(playerId) {
+        if (!this.deaths.has(playerId)) {
+            this.deaths.set(playerId, this.index++);
+        }
+        this.lastAddedPlayer = playerId;
+    }
+    getDeathOrder(playerId) {
+        return this.deaths.get(playerId);
+    }
+    reset() {
+        this.winner = null;
+        this.index = 0;
+        this.deaths.clear();
+        this.lastAddedPlayer = null;
+    }
+    getWinner() {
+        if (this.winner == null) {
+            let alivePlayer = null;
+            for (const playerId in this.players) {
+                if (!this.deaths.has(playerId)) {
+                    alivePlayer = playerId;
+                    break;
+                }
+            }
+
+            if (!alivePlayer && Object.keys(this.players).length === 1) {
+                alivePlayer = Object.keys(this.players)[0];
+            } else if (!alivePlayer) {
+                alivePlayer = this.lastAddedPlayer;
+            }
+            this.winner = alivePlayer;
+        }
+
+        return this.winner;
+    }
 }

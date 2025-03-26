@@ -356,14 +356,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Weapon
       objectReference: {fileID: 0}
-    - target: {fileID: 1747793603003821158, guid: 0305f7c7bbad29eae9631d708abbcb52, type: 3}
-      propertyPath: automatic
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1747793603003821158, guid: 0305f7c7bbad29eae9631d708abbcb52, type: 3}
-      propertyPath: reloadTime
-      value: 200
-      objectReference: {fileID: 0}
     - target: {fileID: 4962847162448096717, guid: 0305f7c7bbad29eae9631d708abbcb52, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

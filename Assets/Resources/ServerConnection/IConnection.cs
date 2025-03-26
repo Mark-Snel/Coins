@@ -1,11 +1,12 @@
 using System;
+using System.Threading.Tasks;
 
 public interface IConnection {
-    void Connect(string address);
-    void Connected();
-    void Disconnect();
-    void Send(byte[] data);
+    Task Connect(string address);
+    Task Disconnect();
+    Task Send(byte[] data);
     event Action<byte[]> OnDataReceived;
+    event Action<ConnectionStatus> OnStatusChanged;
 }
 
 public enum ConnectionStatus {

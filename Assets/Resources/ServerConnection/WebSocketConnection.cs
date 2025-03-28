@@ -69,7 +69,8 @@ public class WebSocketConnection : IConnection {
                 await webSocket.Close();
             } else if (webSocket.State == WebSocketState.Connecting) {
                 Debug.Log("Closed on connecting");
-                await webSocket.Close();
+                webSocket = null;
+                Status = ConnectionStatus.Disconnected;
             } else if (webSocket.State == WebSocketState.Closed) {
                 Status = ConnectionStatus.Disconnected;
             } else {

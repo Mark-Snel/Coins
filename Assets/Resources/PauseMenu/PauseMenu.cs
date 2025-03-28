@@ -11,7 +11,8 @@ public class PauseMenu : MonoBehaviour{
     private Vector3 originalExitPosition;
     private Vector3 originalResumePosition;
     private GameObject DCText;
-    private TMP_Text infoText;
+    private TMP_Text coinsText;
+    private int addEffectTimer = 0;
     public bool locked { get; private set; }
     private bool active = false;
     public bool Active {
@@ -66,7 +67,7 @@ public class PauseMenu : MonoBehaviour{
             Debug.LogWarning("Exit button not found.");
         }
         DCText = transform.Find("Canvas").Find("DC").gameObject;
-        infoText = transform.Find("Canvas").transform.Find("Info").Find("Text").GetComponent<TMP_Text>();
+        coinsText = transform.Find("Canvas").transform.Find("Info").Find("Coins").GetComponent<TMP_Text>();
     }
 
     void Start() {
@@ -74,10 +75,20 @@ public class PauseMenu : MonoBehaviour{
     }
 
     void FixedUpdate() {
-        if (infoText) {
-            infoText.text = $"Received players ids: {string.Join(", ", GameController.ReceivedPlayerList ?? new byte[0])}\n" +
-               $"Spawned players: {GameController.GetPlayers() ?? "None"}" +
-               (GameController.FaultyClient ? "Faulty client detected, you may experience lag. I believe this is a unity bug" : "");
+        if (coinsText) {
+            if (active) {
+                if (GameController.EarnedCoins > 0) {
+                    addEffectTimer++;
+                    if ((addEffectTimer - 50) % 5 == 1) {
+                        GameController.EarnedCoins--;
+                        GameController.Coins++;
+                        coinsText.fontSize = 0.4f;
+                    }
+                } else {
+                    addEffectTimer = 0;
+                }
+            }
+            coinsText.text = $"Coins: {GameController.Coins} " + (GameController.EarnedCoins > 0 ? $"+ {GameController.EarnedCoins}" : "");
         }
     }
 
@@ -85,10 +96,14 @@ public class PauseMenu : MonoBehaviour{
         if (Camera.main != mainCam) {
             AttachToMainCamera();
         }
+        if (active) {
+            coinsText.fontSize = Mathf.Lerp(coinsText.fontSize, 0.3f, Time.deltaTime * 5f);
+        }
 
         if (mainCam != null && coverSpriteRenderer != null) {
             float height = mainCam.orthographicSize * 2f;
             float width = height * mainCam.aspect;
+            exitButton.transform.position = new Vector3(width / 2 - 0.75f, exitButton.transform.position.y, exitButton.transform.position.z);
 
             Vector2 spriteSize = coverSpriteRenderer.sprite.bounds.size;
 

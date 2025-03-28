@@ -14,6 +14,24 @@ public class ExternalPlayerController : MonoBehaviour
     [SerializeField] private int health;
     [SerializeField] private float interpolationFactor = 0.2f;
     public byte playerId;
+    private bool frozen = false;
+    private bool fixPosition = false;
+    public bool Frozen {
+        get {return frozen;}
+        set {
+            if (value != frozen) {
+                frozen = value;
+                if (frozen) {
+                    rb.linearVelocity = Vector2.zero;
+                    rb.bodyType = RigidbodyType2D.Kinematic;
+                } else {
+                    rb.bodyType = RigidbodyType2D.Dynamic;
+                    SetPosition(targetPosition);
+                    fixPosition = true;
+                }
+            }
+        }
+    }
 
     private float edgeSize = 0.04f;
 
@@ -176,7 +194,7 @@ public class ExternalPlayerController : MonoBehaviour
     private void ProcessDeath() {
         if (rb && cl) {
             if (isDead) {
-                hud?.gameObject.SetActive(false);
+                hud?.SetActive(false);
                 weapon?.gameObject.SetActive(false);
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
@@ -185,7 +203,7 @@ public class ExternalPlayerController : MonoBehaviour
                 sr.enabled = false;
                 isr.enabled = false;
             } else {
-                hud?.gameObject.SetActive(true);
+                hud?.SetActive(true);
                 weapon?.gameObject.SetActive(true);
                 health = MaxHealth;
                 rb.simulated = true;
@@ -212,14 +230,23 @@ public class ExternalPlayerController : MonoBehaviour
 
     private Vector2 targetPosition;
     public void UpdatePosition(Vector2 position) {
+        if (fixPosition) {
+            if ((rb.position - targetPosition).magnitude > rb.linearVelocity.magnitude + 0.5f) {
+                SetPosition(position);
+                fixPosition = false;
+            }
+        }
+        if (IsDead) {
+            SetPosition(position);
+        }
         targetPosition = position;
     }
 
     public void SetPosition(Vector2 position) {
-        rb = GetComponent<Rigidbody2D>();
+        if (!rb) {rb = GetComponent<Rigidbody2D>();}
         rb.position = position;
+        transform.position = new Vector3(position.x, position.y, transform.position.z);
     }
-
 
     private Vector2 appliedForce = Vector2.zero;
     public void UpdateForce(Vector2 force) {

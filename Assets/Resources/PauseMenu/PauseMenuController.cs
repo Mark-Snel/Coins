@@ -28,7 +28,16 @@ public class PauseMenuController {
     }
     public static void Resume() {
         if (menu != null) {
-            menu.gameObject.SetActive(false);
+            menu.Active = false;
+        }
+    }
+
+    public static void Open() {
+        createMenu();
+        if (!menu.locked) {
+            if (enabled) {
+                menu.Active = true;
+            }
         }
     }
 

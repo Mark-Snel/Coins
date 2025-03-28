@@ -127,8 +127,10 @@ public class PlayerController : MonoBehaviour {
         hud?.UpdateReload(reloadTime, reloadProgress);
     }
 
-
-
+    public static void SetPosition(float x, float y) {
+        Instance.rb.position = new Vector2(x, y);
+        Instance.transform.position = new Vector3(x, y, Instance.transform.position.z);
+    }
 
     public void Delete() {
         Instance = null;
@@ -208,6 +210,13 @@ public class PlayerController : MonoBehaviour {
     }
 
     void FixedUpdate() {
+        if (BlockInputs) {
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.linearVelocity = Vector2.zero;
+            return;
+        } else {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+        }
         if (!isDead) {
             ProcessJump();
             ProcessHorizontalMovement();
@@ -292,7 +301,7 @@ public class PlayerController : MonoBehaviour {
 
     private void ProcessDeath() {
         if (isDead) {
-            hud?.gameObject.SetActive(false);
+            hud?.SetActive(false);
             weapon?.gameObject.SetActive(false);
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
@@ -301,7 +310,7 @@ public class PlayerController : MonoBehaviour {
             sr.enabled = false;
             isr.enabled = false;
         } else {
-            hud?.gameObject.SetActive(true);
+            hud?.SetActive(true);
             weapon?.gameObject.SetActive(true);
             Health = MaxHealth;
             rb.simulated = true;
@@ -317,6 +326,11 @@ public class PlayerController : MonoBehaviour {
             UpdateColor();
             ProcessDeath();
         }
+    }
+
+    public void Refresh() {
+        weapon?.Reload();
+        Health = MaxHealth;
     }
 
     public void Hit(Vector2 knockback, int damage, byte fromPlayerId, int projectileId) {

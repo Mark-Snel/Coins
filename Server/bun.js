@@ -9,6 +9,7 @@ let currentMap = Maps.LOBBY;
 let nextMap = Maps.LOBBY;
 
 let newRoundTimeout = 0;
+let spawnOffset = 0;
 let clientsToKick = null;
 
 const deathTracker = new DeathTracker();
@@ -151,13 +152,14 @@ setInterval(() => {
             for (const clientKey of clientsToKick) {
                 deleteClient(clientKey);
             }
+            spawnOffset = (spawnOffset + 1) % 64;
             clients.forEach((client) => {
-                client.send(Buffer.from([9]));
+                client.send(Buffer.from([9, spawnOffset]));
                 client.died = false;
             });
             deathTracker.reset();
         } else if (!clientsToKick || clientsToKick.size === 0) {
-            newRoundTimeout = Math.min(newRoundTimeout, 150);
+            newRoundTimeout = Math.min(newRoundTimeout, 200);
         }
         return;
     }
@@ -212,7 +214,7 @@ setInterval(() => {
             }
             let roundOverPacket = Buffer.alloc(0);
             if (roundComplete) {
-                roundOverPacket = Buffer.from([8, Math.min(deathTracker.getDeathOrder(client.playerId) + 1, 3), deathTracker.getWinner()]);
+                roundOverPacket = Buffer.from([8, Math.min((deathTracker.getDeathOrder(client.playerId) + 1) * 6 - 2, 24), deathTracker.getWinner()]);
             }
 
             const clientSpecificPacket = Buffer.concat([packet, roundOverPacket, shotsPacket, hitsPacket, Buffer.from([4, client.playerId])]);
@@ -281,7 +283,6 @@ rl.on("line", (input) => {
             for (const [playerId, hitPacket] of hits.entries()) {
                 const count = hitPacket.readInt32LE(0);
                 console.log(`Player ${playerId} has ${count} hits.`);
-                console.log(hitPacket);
             }
             break;
         default:
@@ -342,7 +343,7 @@ const Deserialize = [
             const count = remainingData.readInt32LE(0);
             const totalLength = 4 + 40 * count;
 
-            if (remainingData.length !== totalLength) {
+            if (remainingData.length < totalLength) {
                 return;
             }
 
@@ -375,7 +376,7 @@ const Deserialize = [
         if (client.playerId !== null) {
             const count = remainingData.readInt32LE(0);
             const totalLength = 4 + 18 * count;
-            if (remainingData.length !== totalLength) {
+            if (remainingData.length < totalLength) {
                 return;
             }
 
@@ -475,7 +476,11 @@ class DeathTracker {
         return this.index;
     }
     getDeathOrder(playerId) {
-        return this.deaths.get(playerId);
+        if (this.deaths.size >= players.size) {
+            return this.deaths.get(playerId);
+        }
+        const deaths = this.deaths.get(playerId);
+        return deaths !== undefined ? deaths + 1 : 0;
     }
     reset() {
         this.winner = null;

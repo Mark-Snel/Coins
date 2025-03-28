@@ -166,8 +166,10 @@ public class ConnectionManager {
             continueDeserializing(data, index);
         },
         (byte[] data, int index) => { //newRound
+            byte spawnOffset = data[index++];
             ConnectionManager.sendUpdates = true;
-            GameController.NewRound();
+            GameController.NewRound(spawnOffset);
+            continueDeserializing(data, index);
         }
     };
 

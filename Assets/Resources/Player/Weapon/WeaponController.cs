@@ -68,6 +68,12 @@ public class WeaponController : MonoBehaviour {
         baseSprite.material.SetFloat("_Saturation", hs.y);
     }
 
+    public void Reload() {
+        AmmoCount = MaxAmmoCount;
+        reloading = 0;
+        player.UpdateAmmo(ammoCount);
+    }
+
     void Start() {
         player = transform.parent.GetComponent<PlayerController>();
         flashSprite = transform.Find("Flash")?.GetComponent<SpriteRenderer>();

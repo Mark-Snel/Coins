@@ -14,6 +14,8 @@ public class HUD : MonoBehaviour {
 
     public Transform healthBar;
 
+    private SpriteRenderer[] spriteRenderers;
+
     private List<GameObject> ammoSquares = new List<GameObject>();
 
     void Start() {
@@ -28,6 +30,22 @@ public class HUD : MonoBehaviour {
         }
     }
 
+    public void SetActive(bool active) {
+        ammoContainer.gameObject.SetActive(active);
+        if (spriteRenderers == null) {
+            List<SpriteRenderer> renderersList = new List<SpriteRenderer>();
+            foreach (Transform child in transform) {
+                SpriteRenderer[] childRenderers = child.GetComponentsInChildren<SpriteRenderer>(true);
+                renderersList.AddRange(childRenderers);
+            }
+            spriteRenderers = renderersList.ToArray();
+        }
+
+        foreach (SpriteRenderer sr in spriteRenderers) {
+            sr.enabled = active;
+        }
+    }
+
     public void UpdateMaxAmmo(int maxAmmo) {
         while(ammoSquares.Count < maxAmmo) {
             int index = ammoSquares.Count;
@@ -38,6 +56,7 @@ public class HUD : MonoBehaviour {
             newBullet.transform.localPosition = pos;
             ammoSquares.Add(newBullet);
         }
+        UpdateAmmo(currentAmmo);
     }
     public void UpdateAmmo(int currentAmmo) {
         if (currentAmmo > 0) {

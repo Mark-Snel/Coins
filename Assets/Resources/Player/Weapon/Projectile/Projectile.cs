@@ -117,13 +117,13 @@ public class Projectile : MonoBehaviour {
         if (!ending) Tick();
     }
 
-    void Tick(bool firstHit = false) {
+    void Tick(bool firstTick = false) {
         Vector2 velocityVector = new Vector2(
             Mathf.Cos(Mathf.Deg2Rad * targetRotation),
             Mathf.Sin(Mathf.Deg2Rad * targetRotation)
         ) * (velocity + acceleration);
 
-        if (!firstHit) velocityVector.y -= gravity;
+        if (!firstTick) velocityVector.y -= gravity;
 
         oldPosition = targetPosition;
         oldRotation = targetRotation;
@@ -137,10 +137,10 @@ public class Projectile : MonoBehaviour {
 
         bool stillInside = false;
         foreach (RaycastHit2D hit in hits) {
-            if (firstHit && hit.distance == 0) {
+            if (firstTick && hit.distance == 0) {
                 startCollider = hit.collider;
                 stillInside = true;
-                firstHit = false;
+                firstTick = false;
                 continue;
             }
 

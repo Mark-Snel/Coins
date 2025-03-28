@@ -6,10 +6,8 @@ using System.Runtime.InteropServices;
 using System.Linq;
 
 public class GameController : MonoBehaviour {
-    public static int coins = 0;
-    public static bool FaultyClient {
-        get; private set;
-    }
+    public static int Coins = 0;
+    public static int EarnedCoins = 0;
     public static byte[] ReceivedPlayerList; // for pause menu info
 
     public GameObject externalPlayerPrefab;
@@ -55,17 +53,22 @@ public class GameController : MonoBehaviour {
     }
 
     public static void RoundOver(byte retrievedCoins, byte winnerId) {
-        coins += retrievedCoins;
+        EarnedCoins += retrievedCoins;
         PlayerController.BlockInputs = true;
+        foreach (var player in externalPlayers.Values) {
+            player.Frozen = true;
+        }
+        PauseMenuController.Open();
     }
-    public static void NewRound() {
+    public static void NewRound(byte spawnOffset) {
         PlayerController.BlockInputs = false;
-        Respawn();
+        foreach (var player in externalPlayers.Values) {
+            player.Frozen = false;
+        }
+        Instance?.Respawn(spawnOffset);
     }
 
-    public static void Respawn() {
-        GameObject[] respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
-
+    public void Respawn(byte spawnOffset) {
         if (respawnPoints == null || respawnPoints.Length == 0 || playerId == null) {
             Debug.LogWarning("Respawn failed: No respawn points found or playerId is null.");
             return;
@@ -73,11 +76,12 @@ public class GameController : MonoBehaviour {
 
         Array.Sort(respawnPoints, (a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
 
-        int index = playerId.Value % respawnPoints.Length;
+        int index = (playerId.Value + spawnOffset) % respawnPoints.Length;
         Vector3 respawnPos = respawnPoints[index].transform.position;
 
-        PlayerController.Instance.transform.position = new Vector3(respawnPos.x, respawnPos.y, PlayerController.Instance.transform.position.z);
+        PlayerController.SetPosition(respawnPos.x, respawnPos.y);
         PlayerController.Instance.IsDead = false;
+        PlayerController.Instance.Refresh();
     }
 
     public static void CheckMap(byte mapIndex) {
@@ -100,7 +104,8 @@ public class GameController : MonoBehaviour {
             PauseMenuController.enabled = true;
         }
         nextMap = currentMap;
-        respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
+        Dispatcher.Enqueue(() => {respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");});
+        PlayerController.BlockInputs = false;
     }
 
     public CoinsMap GetCurrentMap() {
@@ -165,7 +170,6 @@ public class GameController : MonoBehaviour {
         }
 
         // Update the player's properties using available public setters.
-        player.IsDead = isDead;
         player.Health = health;
         player.MassPerSize = massPerSize;
         player.MassMultiplier = massMultiplier;
@@ -188,6 +192,8 @@ public class GameController : MonoBehaviour {
         player.UpdatePosition(position);
         player.UpdateVelocity(velocity);
         player.UpdateForce(force);
+
+        player.IsDead = isDead;
     }
 
     public static void ShotsFired(byte[] data, int index, int count, byte playerId) {
@@ -240,8 +246,6 @@ public class GameController : MonoBehaviour {
         List<byte> keysToRemove = null;
         foreach (var kvp in externalPlayers) {
             if (kvp.Value == null) {
-                Debug.LogWarning("Hallo Coen!");
-                FaultyClient = true;
                 externalPlayers.Remove(kvp.Key);
             }
             if (!receivedIds[kvp.Key]) {

@@ -8,7 +8,7 @@ public class ShopItem : MonoBehaviour {
     [SerializeField] private NullableValue<int> maxAmmoCount;
     [SerializeField] private NullableValue<int> burstSize;
     [SerializeField] private NullableValue<int> burstTimeBetweenShots;
-    [SerializeField] private NullableValue<int> timeBetweenShots;
+    [SerializeField] private NullableValue<int> attackSpeed;
     [SerializeField] private NullableValue<float> inheritInertia;
     [SerializeField] private NullableValue<float> recoil;
 
@@ -48,7 +48,7 @@ public class ShopItem : MonoBehaviour {
     public int? GetMaxAmmoCount() => ApplyLevel(maxAmmoCount);
     public int? GetBurstSize() => ApplyLevel(burstSize);
     public int? GetBurstTimeBetweenShots() => ApplyLevel(burstTimeBetweenShots);
-    public int? GetTimeBetweenShots() => ApplyLevel(timeBetweenShots);
+    public int? GetAttackSpeed() => ApplyLevel(attackSpeed);
     public float? GetInheritInertia() => ApplyLevel(inheritInertia);
     public float? GetRecoil() => ApplyLevel(recoil);
 
@@ -79,16 +79,21 @@ public class ShopItem : MonoBehaviour {
     public TMP_Text title;
     public string titleText;
 
+    public void Deselect() {
+        upgradeButton.selected = false;
+        downgradeButton.selected = false;
+    }
+
     void Start() {
         titleText = title.text;
         title.text = titleText + ": " + level;
         SetPriceTags();
         if (level <= min) {
-            downgradeButton .selected = false;
+            downgradeButton.selected = false;
             downgradeButton.gameObject.SetActive(false);
         }
         if (level >= max) {
-            upgradeButton .selected = false;
+            upgradeButton.selected = false;
             upgradeButton.gameObject.SetActive(false);
         }
     }
@@ -107,45 +112,53 @@ public class ShopItem : MonoBehaviour {
     }
 
     public void Upgrade(bool positive) {
-        if (GameController.GetTotalCoins() >= pricePerLevel) {
-            if (positive) {
-                if (level < max) {
-                    level++;
-                    title.text = titleText + ": " + level;
-                    if (maxUnlocked < level) {
+        if (positive) {
+            if (level < max) {
+                if (maxUnlocked < level + 1) {
+                    if (GameController.GetTotalCoins() >= pricePerLevel) {
+                        level++;
+                        title.text = titleText + ": " + level;
                         maxUnlocked = level;
                         GameController.LoseCoins(pricePerLevel);
                     }
-                    if (level >= max) {
-                        upgradeButton .selected = false;
-                        upgradeButton.gameObject.SetActive(false);
-                    }
-                    if (level > min) {
-                        downgradeButton .selected = false;
-                        downgradeButton.gameObject.SetActive(true);
-                    }
-                    SetPriceTags();
-                    Shop.ApplyChanges();
-                }
-            } else {
-                if (level > min) {
-                    level--;
+                } else {
+                    level++;
                     title.text = titleText + ": " + level;
-                    if (minUnlocked > level) {
+                }
+                if (level >= max) {
+                    upgradeButton.selected = false;
+                    upgradeButton.gameObject.SetActive(false);
+                }
+                if (level > min) {
+                    downgradeButton.selected = false;
+                    downgradeButton.gameObject.SetActive(true);
+                }
+                SetPriceTags();
+                Shop.ApplyChanges();
+            }
+        } else {
+            if (level > min) {
+                if (minUnlocked > level - 1) {
+                    if (GameController.GetTotalCoins() >= pricePerLevel) {
+                        level--;
+                        title.text = titleText + ": " + level;
                         minUnlocked = level;
                         GameController.LoseCoins(pricePerLevel);
                     }
-                    if (level <= min) {
-                        downgradeButton .selected = false;
-                        downgradeButton.gameObject.SetActive(false);
-                    }
-                    if (level < max) {
-                        upgradeButton .selected = false;
-                        upgradeButton.gameObject.SetActive(true);
-                    }
-                    SetPriceTags();
-                    Shop.ApplyChanges();
+                } else {
+                    level--;
+                    title.text = titleText + ": " + level;
                 }
+                if (level <= min) {
+                    downgradeButton .selected = false;
+                    downgradeButton.gameObject.SetActive(false);
+                }
+                if (level < max) {
+                    upgradeButton .selected = false;
+                    upgradeButton.gameObject.SetActive(true);
+                }
+                SetPriceTags();
+                Shop.ApplyChanges();
             }
         }
     }

@@ -579,7 +579,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1.75, y: 0.25}
+  m_SizeDelta: {x: 1.45, y: 0.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6082880466103909196
 CanvasRenderer:
@@ -717,7 +717,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1, y: 1}
+  m_SizeDelta: {x: 3, y: 0.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6587329970949527204
 MonoBehaviour:
@@ -943,7 +943,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9216519128356249409, guid: ba8da8ad5482d78a2a58e6ddc966efed, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -1.2
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 9216519128356249409, guid: ba8da8ad5482d78a2a58e6ddc966efed, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1127,7 +1127,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9216519128356249409, guid: ba8da8ad5482d78a2a58e6ddc966efed, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 1.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9216519128356249409, guid: ba8da8ad5482d78a2a58e6ddc966efed, type: 3}
       propertyPath: m_AnchoredPosition.y

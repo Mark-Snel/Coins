@@ -6,7 +6,7 @@ using static ObjectPool<Projectile>;
 public class WeaponController : MonoBehaviour {
     //weapon behaviour
     [SerializeField] private bool automatic = false;
-    [SerializeField] private int reloadTime = 200; //in ticks
+    [SerializeField] private int reloadTime = 150; //in ticks
     [SerializeField] private int maxAmmoCount = 3;
     public int MaxAmmoCount {
         get { return maxAmmoCount; }
@@ -18,7 +18,7 @@ public class WeaponController : MonoBehaviour {
         }
     }
     [SerializeField] private int burstSize = 1;
-    [SerializeField] private int burstTimeBetweenShots = 5; //only applies if burstSize > 1, in ticks
+    [SerializeField] private int burstTimeBetweenShots = 8; //only applies if burstSize > 1, in ticks
     [SerializeField] private int timeBetweenShots = 25; //in ticks
     [SerializeField] private float inheritInertia = 0; //multiplier of how much speed the projectile gets from the velocity of the player when shot.
     [SerializeField] private float recoil = 0;
@@ -155,9 +155,10 @@ public class WeaponController : MonoBehaviour {
             projectile.transform.rotation = Quaternion.Euler(0f, 0f, finalRotation);
 
             int projectileId = Projectile.ProjectileIdCounter++;
-            if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+            if (GameController.playerId != null) {
+                WeaponPacker.AddShot(playerRb.position.x, playerRb.position.y, finalRotation, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage, projectileId);
+            }
             projectile.Fire(GameController.playerId ?? 255, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage, projectileId);
-            WeaponPacker.AddShot(playerRb.position.x, playerRb.position.y, finalRotation, attackLifeTime, finalProjectileVelocity.magnitude, attackAcceleration, attackGravity, knockback, damage, projectileId);
             playerRb.AddForce(new Vector2(
                 -Mathf.Cos(Mathf.Deg2Rad * weaponRotation),
                 -Mathf.Sin(Mathf.Deg2Rad * weaponRotation)

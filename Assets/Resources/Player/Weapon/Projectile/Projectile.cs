@@ -137,6 +137,7 @@ public class Projectile : MonoBehaviour {
 
         bool stillInside = false;
         foreach (RaycastHit2D hit in hits) {
+            if (hit.collider.isTrigger) return;
             if (firstTick && hit.distance == 0) {
                 startCollider = hit.collider;
                 stillInside = true;
@@ -176,7 +177,7 @@ public class Projectile : MonoBehaviour {
         }
 
         ExternalPlayerController externalPlayer = hit.collider.GetComponent<ExternalPlayerController>();
-        if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+        if (GameController.playerId == null) return;
         if (externalPlayer != null && fromPlayerId == GameController.playerId.Value) {
             externalPlayer.Hit(new Vector2(
                 Mathf.Cos(Mathf.Deg2Rad * targetRotation),

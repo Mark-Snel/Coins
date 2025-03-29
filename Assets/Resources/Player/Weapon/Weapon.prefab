@@ -51,7 +51,7 @@ MonoBehaviour:
   reloadTime: 150
   maxAmmoCount: 3
   burstSize: 1
-  burstTimeBetweenShots: 5
+  burstTimeBetweenShots: 8
   timeBetweenShots: 25
   inheritInertia: 0
   recoil: 0

@@ -13,10 +13,10 @@ public static class Shop {
     private static float MaxHealth_SizeMultiplier = 0.01f;
 
     private static bool Automatic = false;
-    private static int ReloadTime = 200;
+    private static int ReloadTime = 150;
     private static int MaxAmmoCount = 3;
     private static int BurstSize = 1;
-    private static int BurstTimeBetweenShots = 5;
+    private static int BurstTimeBetweenShots = 8;
     private static int TimeBetweenShots = 25;
     private static float InheritInertia = 0;
     private static float Recoil = 0;
@@ -32,12 +32,28 @@ public static class Shop {
 
     public static ShopItem[] shopItems;
 
-    public static void ApplyChanges() {
-        if (shopItems == null) {
-            Shop.shopItems = GameObject.FindObjectsByType<ShopItem>(0);
-        }
+    private static void SetShopItems() {
+        Shop.shopItems = GameObject.FindObjectsByType<ShopItem>(0);
+    }
 
-        if (shopItems == null) return;
+    public static void Deselect() {
+        if (shopItems == null) {
+            SetShopItems();
+        }
+        foreach (var shopItem in shopItems) {
+            if (shopItem == null) {
+                SetShopItems();
+                Deselect();
+                return;
+            }
+            shopItem?.Deselect();
+        }
+    }
+
+    public static void ApplyChanges() {
+        if (shopItems == null) SetShopItems();
+
+        if (shopItems == null || shopItems.Length <= 0) return;
         float speed = Speed;
         float acceleration = Acceleration;
         float jumpHeight = JumpHeight;
@@ -68,7 +84,11 @@ public static class Shop {
         int damage = Damage;
 
         foreach (var shopItem in shopItems) {
-            if (shopItem == null) continue;
+            if (shopItem == null) {
+                SetShopItems();
+                ApplyChanges();
+                return;
+            }
 
             speed += shopItem.GetSpeed() ?? 0f;
             acceleration += shopItem.GetAcceleration() ?? 0f;
@@ -86,7 +106,7 @@ public static class Shop {
             maxAmmoCount += shopItem.GetMaxAmmoCount() ?? 0;
             burstSize += shopItem.GetBurstSize() ?? 0;
             burstTimeBetweenShots += shopItem.GetBurstTimeBetweenShots() ?? 0;
-            timeBetweenShots += shopItem.GetTimeBetweenShots() ?? 0;
+            timeBetweenShots = Mathf.RoundToInt(timeBetweenShots / (((float)(shopItem.GetAttackSpeed() ?? 0) + 100) / 100f));//percentage for this since it worked weirdly
             inheritInertia += shopItem.GetInheritInertia() ?? 0f;
             recoil += shopItem.GetRecoil() ?? 0f;
 
@@ -97,7 +117,7 @@ public static class Shop {
             attackAcceleration += shopItem.GetAttackAcceleration() ?? 0f;
             attackGravity += shopItem.GetAttackGravity() ?? 0f;
             knockback += shopItem.GetKnockback() ?? 0f;
-            damage += shopItem.GetDamage() ?? 0;
+            damage = Mathf.Max(damage + Mathf.RoundToInt(Damage * ((float)(shopItem.GetDamage() ?? 0) / 100f)), 0);//also for damage working with percentage but slightly different
         }
 
         if (PlayerController.Instance != null) {

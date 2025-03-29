@@ -39,10 +39,8 @@ public class PauseMenuController {
 
     public static void Open() {
         createMenu();
-        if (!menu.locked) {
-            if (enabled) {
-                menu.Active = true;
-            }
+        if (!menu.locked && enabled) {
+            menu.Active = true;
         }
     }
 

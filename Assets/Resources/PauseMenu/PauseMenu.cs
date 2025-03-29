@@ -23,6 +23,8 @@ public class PauseMenu : MonoBehaviour{
         set {
             if (active != value) {
                 active = value;
+                PlayerController.BlockInputs = value;
+                Shop.Deselect();
                 gameObject.SetActive(value);
                 if (active && resumeButton && exitButton) {
                     resumeButton.selected = false;

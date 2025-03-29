@@ -5,6 +5,7 @@ using static ColorManager;
 
 public class PlayerController : MonoBehaviour {
     public static PlayerController Instance { get; private set; }
+    public static bool Frozen = false;
     public static bool BlockInputs = false;
 
     [SerializeField] private bool isDead = true;
@@ -200,7 +201,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
-        if (!isDead && !BlockInputs) {
+        if (!isDead && !Frozen && !BlockInputs) {
             UpdateKeyState(jumpAction, ref jumpState);
             Weapon?.Attack(
                 GetRotationToCursor(transform.position, aimAction, Camera.main),
@@ -210,7 +211,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     void FixedUpdate() {
-        if (BlockInputs) {
+        if (Frozen) {
             rb.bodyType = RigidbodyType2D.Kinematic;
             rb.linearVelocity = Vector2.zero;
             return;
@@ -219,7 +220,7 @@ public class PlayerController : MonoBehaviour {
         }
         if (!isDead) {
             ProcessJump();
-            ProcessHorizontalMovement();
+            if (!BlockInputs) ProcessHorizontalMovement();
             if (health <= 0) {
                 IsDead = true;
             }
@@ -336,13 +337,15 @@ public class PlayerController : MonoBehaviour {
     public void Hit(Vector2 knockback, int damage, byte fromPlayerId, int projectileId) {
         Health -= damage;
         rb.AddForce(knockback);
-        if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
+        if (GameController.playerId == null) {
+            Debug.LogWarning("GameController.playerId is NULL");
+            return;
+        }
         WeaponPacker.AddHit(knockback, damage, fromPlayerId, projectileId, GameController.playerId.Value);
     }
     public void Hit(Vector2 knockback, int damage) {
         Health -= damage;
         rb.AddForce(knockback);
-        if (GameController.playerId == null) Debug.LogWarning("GameController.playerId is NULL");
     }
 
     private Vector2 totalForce = Vector2.zero;

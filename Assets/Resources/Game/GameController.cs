@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Linq;
 
 public class GameController : MonoBehaviour {
-    public static int Coins = 100;
+    public static int Coins = 0;
     public static int EarnedCoins = 0;
     public static int LostCoins = 0;
     public static int GetTotalCoins() {

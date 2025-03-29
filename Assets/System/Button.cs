@@ -36,7 +36,7 @@ public class Button : MonoBehaviour
             // If a callback has been set, call it; otherwise do the default SceneTransition.
             if (OnClick != null)
                 OnClick.Invoke();
-            else
+            if (!string.IsNullOrEmpty(destination))
                 SceneTransition.LoadScene(destination);
         } else if (selected && attackAction.ReadValue<float>() > 0 && clickEffect && (CanClickEffect == null || CanClickEffect())) {
             // Only run click effect if either no delegate is set or the delegate returns true.

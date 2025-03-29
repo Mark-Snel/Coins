@@ -6,8 +6,16 @@ using System.Runtime.InteropServices;
 using System.Linq;
 
 public class GameController : MonoBehaviour {
-    public static int Coins = 0;
+    public static int Coins = 100;
     public static int EarnedCoins = 0;
+    public static int LostCoins = 0;
+    public static int GetTotalCoins() {
+        return Coins + EarnedCoins - LostCoins;
+    }
+    public static void LoseCoins(int amount) {
+        LostCoins += amount;
+        PauseMenuController.LoseCoins();
+    }
     public static byte[] ReceivedPlayerList; // for pause menu info
 
     public GameObject externalPlayerPrefab;
@@ -29,9 +37,9 @@ public class GameController : MonoBehaviour {
         foreach (var player in externalPlayers.Values) {
             player.Delete();
             externalPlayers = new Dictionary<byte, ExternalPlayerController>();
-            ConnectionManager.Disconnect();
         }
         ConnectionManager.Disconnect();
+        Coins = 0;
     }
 
     public static void Initialize() {

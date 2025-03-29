@@ -10,6 +10,11 @@ public class PauseMenuController {
         pauseAction = InputSystem.actions.FindAction("Pause");
         pauseAction.performed += ctx => Pause();
         pauseAction.Enable();
+        createMenu();
+    }
+
+    public static void LoseCoins() {
+        menu.LoseCoins();
     }
 
     public static void GameDisconnected() {

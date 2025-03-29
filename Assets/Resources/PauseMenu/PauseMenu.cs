@@ -13,6 +13,7 @@ public class PauseMenu : MonoBehaviour{
     private GameObject DCText;
     private TMP_Text coinsText;
     private int addEffectTimer = 0;
+    private int loseEffectTimer = 0;
     public bool locked { get; private set; }
     private bool active = false;
     public bool Active {
@@ -29,6 +30,10 @@ public class PauseMenu : MonoBehaviour{
                 }
             }
         }
+    }
+
+    public void LoseCoins() {
+        loseEffectTimer = 0;
     }
 
     void Awake() {
@@ -87,8 +92,18 @@ public class PauseMenu : MonoBehaviour{
                 } else {
                     addEffectTimer = 0;
                 }
+                if (GameController.LostCoins > 0) {
+                    loseEffectTimer++;
+                    if ((loseEffectTimer - 50) % 2 == 1) {
+                        GameController.LostCoins--;
+                        GameController.Coins--;
+                        coinsText.fontSize = 0.4f;
+                    }
+                } else {
+                    loseEffectTimer = 0;
+                }
             }
-            coinsText.text = $"Coins: {GameController.Coins} " + (GameController.EarnedCoins > 0 ? $"+ {GameController.EarnedCoins}" : "");
+            coinsText.text = $"Coins: {GameController.Coins}" + (GameController.EarnedCoins > 0 ? $" + {GameController.EarnedCoins}" : "") + (GameController.LostCoins > 0 ? $" - {GameController.LostCoins}" : "");
         }
     }
 

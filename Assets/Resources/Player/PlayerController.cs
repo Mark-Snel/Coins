@@ -114,7 +114,7 @@ public class PlayerController : MonoBehaviour {
 
     private InputAction attackAction;
     private InputAction aimAction;
-    [SerializeField] private WeaponController weapon;
+    [SerializeField] public WeaponController Weapon;
 
     private HUD hud;
     public void UpdateMaxAmmo(int count){
@@ -160,7 +160,7 @@ public class PlayerController : MonoBehaviour {
     void Start() {
         Application.runInBackground = true;
         dataPacker = GetComponent<PlayerPacker>();
-        weaponPacker = weapon?.GetComponent<WeaponPacker>();
+        weaponPacker = Weapon?.GetComponent<WeaponPacker>();
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
         ist = transform.Find("InnerSprite");
@@ -202,7 +202,7 @@ public class PlayerController : MonoBehaviour {
     void Update() {
         if (!isDead && !BlockInputs) {
             UpdateKeyState(jumpAction, ref jumpState);
-            weapon?.Attack(
+            Weapon?.Attack(
                 GetRotationToCursor(transform.position, aimAction, Camera.main),
                 GetKeyState(attackAction)
             );
@@ -285,7 +285,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void UpdateColor() {
-        weapon?.SetColor(color);
+        Weapon?.SetColor(color);
         sr.color = GetColor(color).Secondary;
         isr.color = GetColor(color).Primary;
     }
@@ -302,7 +302,7 @@ public class PlayerController : MonoBehaviour {
     private void ProcessDeath() {
         if (isDead) {
             hud?.SetActive(false);
-            weapon?.gameObject.SetActive(false);
+            Weapon?.gameObject.SetActive(false);
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
             rb.simulated = false;
@@ -311,7 +311,7 @@ public class PlayerController : MonoBehaviour {
             isr.enabled = false;
         } else {
             hud?.SetActive(true);
-            weapon?.gameObject.SetActive(true);
+            Weapon?.gameObject.SetActive(true);
             Health = MaxHealth;
             rb.simulated = true;
             cl.enabled = true;
@@ -329,7 +329,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void Refresh() {
-        weapon?.Reload();
+        Weapon?.Reload();
         Health = MaxHealth;
     }
 

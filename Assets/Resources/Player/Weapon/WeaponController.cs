@@ -33,6 +33,24 @@ public class WeaponController : MonoBehaviour {
     [SerializeField] private float knockback = 1;
     [SerializeField] private int damage = 30;
 
+    public bool Automatic { get { return automatic; } set { automatic = value; } }
+    public int ReloadTime { get { return reloadTime; } set { reloadTime = value; } }
+    public int BurstSize { get { return burstSize; } set { burstSize = value; } }
+    public int BurstTimeBetweenShots { get { return burstTimeBetweenShots; } set { burstTimeBetweenShots = value; } }
+    public int TimeBetweenShots { get { return timeBetweenShots; } set { timeBetweenShots = value; } }
+    public float InheritInertia { get { return inheritInertia; } set { inheritInertia = value; } }
+    public float Recoil { get { return recoil; } set { recoil = value; } }
+    public float Spread { get { return spread; } set { spread = value; } }
+    public int AttackLifeTime { get { return attackLifeTime; } set { attackLifeTime = value; } }
+    public int AttackCount { get { return attackCount; } set { attackCount = value; } }
+    public float AttackVelocity { get { return attackVelocity; } set { attackVelocity = value; } }
+    public float AttackAcceleration { get { return attackAcceleration; } set { attackAcceleration = value; } }
+    public float AttackGravity { get { return attackGravity; } set { attackGravity = value; } }
+    public float Knockback { get { return knockback; } set { knockback = value; } }
+    public int Damage { get { return damage; } set { damage = value; } }
+
+    public int AmmoCount { get { return ammoCount; } set { ammoCount = value; } }
+
     private int ammoCount;
     private int burstRemaining = 0;
     private int burstCooldown = 0;
@@ -54,12 +72,6 @@ public class WeaponController : MonoBehaviour {
         get { return transform.eulerAngles.z; }
         private set {}
     }
-    public int ReloadTime { get { return reloadTime; } set { reloadTime = value; } }
-    public int AmmoCount { get { return ammoCount; } set { ammoCount = value; } }
-    public int TimeBetweenShots { get { return timeBetweenShots; } set { timeBetweenShots = value; } }
-    public int BurstSize { get { return burstSize; } set { burstSize = value; } }
-    public int BurstTimeBetweenShots { get { return burstTimeBetweenShots; } set { burstTimeBetweenShots = value; } }
-    public int AttackCount { get { return attackCount; } set { attackCount = value; } }
 
     public void SetColor(int color) {
         this.color = color;

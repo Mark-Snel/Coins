@@ -127,7 +127,7 @@ MonoBehaviour:
   maxHealth: 100
   maxHealth_SizeMultiplier: 0.01
   health: 0
-  weapon: {fileID: 6968067969844963665}
+  Weapon: {fileID: 6968067969844963665}
 --- !u!212 &836430132830683311
 SpriteRenderer:
   m_ObjectHideFlags: 0

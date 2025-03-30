@@ -2,8 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class SceneTransition : MonoBehaviour
-{
+public class SceneTransition : MonoBehaviour {
     private static SceneTransition Instance;
     private static Transform shiny;
     private static Transform screen;
@@ -17,14 +16,24 @@ public class SceneTransition : MonoBehaviour
 
     public static void LoadScene(string sceneName, bool fadeToBlack = false) {
         if (transitioning) return;
-        if (Instance == null)
-        {
+        if (Instance == null) {
             GameObject obj = Resources.Load<GameObject>("Transition/SceneTransition");
             Instance = Instantiate(obj.GetComponent<SceneTransition>());
-            DontDestroyOnLoad(Instance);
+            DontDestroyOnLoad(Instance.gameObject);
+
+            // Get references to children objects.
             screen = Instance.transform.Find("Screen");
             screenSr = screen.GetComponent<SpriteRenderer>();
             shiny = Instance.transform.Find("Shiny");
+
+            // Check if the main camera exists; if not, create one.
+            if (Camera.main == null) {
+                GameObject newCamera = new GameObject("Main Camera");
+                newCamera.AddComponent<Camera>();
+                newCamera.tag = "MainCamera";
+            }
+            // Attach the transition object to the camera.
+            Instance.transform.SetParent(Camera.main.transform, false);
         }
         transitioning = true;
         fadeTransition = fadeToBlack;
@@ -38,20 +47,33 @@ public class SceneTransition : MonoBehaviour
 
     void LateUpdate() {
         if (transitioning) {
+            // Ensure we have a valid camera (in case the camera got unloaded).
+            if (Camera.main == null) {
+                GameObject newCamera = new GameObject("Main Camera");
+                newCamera.AddComponent<Camera>();
+                newCamera.tag = "MainCamera";
+                // Reattach this transition object.
+                transform.SetParent(newCamera.transform, false);
+            }
+            // Calculate dimensions based on the main camera.
             float cameraHeight = Camera.main.orthographicSize * 2f;
             float cameraWidth = cameraHeight * Camera.main.aspect;
             screen.localScale = new Vector3(cameraWidth, cameraHeight, 1);
+
             if (!destination.Equals("")) {
-                shiny.localPosition = new Vector3(cameraWidth/2 + 5.5f, shiny.localPosition.y, shiny.localPosition.z);
+                // Update the shiny object using localPosition.
+                shiny.localPosition = new Vector3(cameraWidth / 2 + 5.5f, shiny.localPosition.y, shiny.localPosition.z);
                 if (fadeTransition) {
                     progress = Mathf.Min(progress + Time.deltaTime * fadeSpeed, 1);
                     screenSr.color = new Color(0, 0, 0, progress);
-                    transform.position = new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, transform.position.z);
+                    // Reset localPosition to keep it centered.
+                    transform.localPosition = new Vector3(0, 0, transform.localPosition.z);
                 } else {
                     progress = Mathf.Min(progress + Time.deltaTime * curtainSpeed, 1);
-                    transform.position = Vector3.Lerp(
-                        new Vector3(Camera.main.transform.position.x - cameraWidth - 11f, Camera.main.transform.position.y, transform.position.z),
-                        new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, transform.position.z),
+                    // Lerp using local positions relative to the camera.
+                    transform.localPosition = Vector3.Lerp(
+                        new Vector3(-cameraWidth - 11f, 0, transform.localPosition.z),
+                        new Vector3(0, 0, transform.localPosition.z),
                         progress
                     );
                 }
@@ -65,9 +87,9 @@ public class SceneTransition : MonoBehaviour
                 }
             } else {
                 progress = Mathf.Max(progress - Time.deltaTime * curtainSpeed, 0);
-                transform.position = Vector3.Lerp(
-                    new Vector3(Camera.main.transform.position.x + cameraWidth + 11f, Camera.main.transform.position.y, transform.position.z),
-                    new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, transform.position.z),
+                transform.localPosition = Vector3.Lerp(
+                    new Vector3(cameraWidth + 11f, 0, transform.localPosition.z),
+                    new Vector3(0, 0, transform.localPosition.z),
                     progress
                 );
                 if (progress <= 0) {
@@ -79,6 +101,7 @@ public class SceneTransition : MonoBehaviour
             }
         }
     }
+
     void FlipShiny() {
         shiny.localScale = new Vector3(shiny.localScale.x * -1, shiny.localScale.y * -1, shiny.localScale.z);
         shiny.localPosition = new Vector3(shiny.localPosition.x * -1, shiny.localPosition.y, shiny.localPosition.z);

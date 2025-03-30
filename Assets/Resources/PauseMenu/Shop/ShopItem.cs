@@ -41,7 +41,7 @@ public class ShopItem : MonoBehaviour {
 
     private float? ApplyLevel(NullableValue<float> value) => value.HasValue ? value * level : null;
     private int? ApplyLevel(NullableValue<int> value) => value.HasValue ? value * level : null;
-    private bool? ApplyLevel(NullableValue<bool> value) => value.HasValue ? (level > 0 ? value.Value : !value.Value) : null;
+    private bool? ApplyLevel(NullableValue<bool> value) => value.HasValue ? (level > 0 ? value : !value) : null;
 
     public bool? GetAutomatic() => ApplyLevel(automatic);
     public int? GetReloadTime() => ApplyLevel(reloadTime);

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Linq;
 
 public static class Shop {
     private static float Speed = 2f;
@@ -33,7 +34,8 @@ public static class Shop {
     public static ShopItem[] shopItems;
 
     private static void SetShopItems() {
-        Shop.shopItems = GameObject.FindObjectsByType<ShopItem>(0);
+        Shop.shopItems = Resources.FindObjectsOfTypeAll<ShopItem>()
+            .Where(item => item.gameObject.scene.isLoaded).ToArray();
     }
 
     public static void Deselect() {
@@ -110,7 +112,7 @@ public static class Shop {
             inheritInertia += shopItem.GetInheritInertia() ?? 0f;
             recoil += shopItem.GetRecoil() ?? 0f;
 
-            spread += shopItem.GetSpread() ?? 0f;
+            spread = Mathf.Max(0, spread + (shopItem.GetSpread() ?? 0f));
             attackLifeTime += shopItem.GetAttackLifeTime() ?? 0;
             attackCount += shopItem.GetAttackCount() ?? 0;
             attackVelocity += shopItem.GetAttackVelocity() ?? 0f;

@@ -2,11 +2,13 @@ const readline = require("readline");
 
 // Define our maps and game state.
 const Maps = Object.freeze({
-    LOBBY: 0
+    LOBBY: 0,
+    FACILITY: 1
 });
 
 let currentMap = Maps.LOBBY;
 let nextMap = Maps.LOBBY;
+nextMap = getRandomMap(currentMap);
 
 let newRoundTimeout = 0;
 let spawnOffset = 0;
@@ -144,11 +146,19 @@ setInterval(() => {
     });
 }, 3000);
 
+function getRandomMap(currentMap) {
+    const values = Object.values(Maps);
+    const filteredValues = values.filter(map => map !== currentMap);
+    return filteredValues[Math.floor(Math.random() * filteredValues.length)];
+}
+
 // Send map and player data periodically.
 setInterval(() => {
     if (newRoundTimeout > 0) {
         newRoundTimeout--;
         if (newRoundTimeout <= 0) {
+            currentMap = nextMap;
+            nextMap = getRandomMap(currentMap);
             for (const clientKey of clientsToKick) {
                 deleteClient(clientKey);
             }
@@ -159,7 +169,7 @@ setInterval(() => {
             });
             deathTracker.reset();
         } else if (!clientsToKick || clientsToKick.size === 0) {
-            newRoundTimeout = Math.min(newRoundTimeout, 200);
+            newRoundTimeout = Math.min(newRoundTimeout, 550);
         }
         return;
     }
@@ -223,7 +233,7 @@ setInterval(() => {
     });
     if (roundComplete) {
         log(`Round Completed, Winner: ${deathTracker.getWinner()}`);
-        newRoundTimeout = 500;
+        newRoundTimeout = 1000;
         clientsToKick = new Set(clients.keys());
     }
     shots.clear();
@@ -476,11 +486,9 @@ class DeathTracker {
         return this.index;
     }
     getDeathOrder(playerId) {
-        if (this.deaths.size >= players.size) {
-            return this.deaths.get(playerId);
-        }
-        const deaths = this.deaths.get(playerId);
-        return deaths !== undefined ? deaths + 1 : 0;
+        const death = this.deaths.get(playerId);
+        const totalDeaths = this.deaths.size; // total number of deaths
+        return death !== undefined ? totalDeaths - death : 0;
     }
     reset() {
         this.winner = null;

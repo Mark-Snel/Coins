@@ -2,6 +2,12 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 
+public enum PauseMenuScreen {
+    DC,
+    Player,
+    Weapon
+}
+
 public class PauseMenu : MonoBehaviour{
     private Camera mainCam;
     private Transform coverTransform;
@@ -10,12 +16,42 @@ public class PauseMenu : MonoBehaviour{
     private Button exitButton;
     private Vector3 originalExitPosition;
     private Vector3 originalResumePosition;
-    private GameObject DCText;
+    public GameObject DCText;
+    public GameObject weaponShop;
+    public GameObject playerShop;
+    public Button weaponButton;
+    public Button playerButton;
     private TMP_Text coinsText;
     private int addEffectTimer = 0;
     private int loseEffectTimer = 0;
     public bool locked { get; private set; }
     private bool active = false;
+    private PauseMenuScreen selectedScreen = PauseMenuScreen.Player;
+    private PauseMenuScreen SelectedScreen {
+        get {return selectedScreen;}
+        set {
+            if (value != selectedScreen) {
+                selectedScreen = value;
+                DCText.SetActive(false);
+                playerShop.SetActive(false);
+                weaponShop.SetActive(false);
+                switch (selectedScreen) {
+                    case PauseMenuScreen.DC:
+                        DCText.SetActive(true);
+                    break;
+                    case PauseMenuScreen.Player:
+                        playerShop.SetActive(true);
+                    break;
+                    case PauseMenuScreen.Weapon:
+                        weaponShop.SetActive(true);
+                    break;
+                    default:
+                        SelectedScreen = PauseMenuScreen.Player;
+                    break;
+                }
+            }
+        }
+    }
     public bool Active {
         get {
             return active;
@@ -25,6 +61,8 @@ public class PauseMenu : MonoBehaviour{
                 active = value;
                 PlayerController.BlockInputs = value;
                 Shop.Deselect();
+                playerButton.selected = false;
+                weaponButton.selected = false;
                 gameObject.SetActive(value);
                 if (active && resumeButton && exitButton) {
                     resumeButton.selected = false;
@@ -73,8 +111,18 @@ public class PauseMenu : MonoBehaviour{
         } else {
             Debug.LogWarning("Exit button not found.");
         }
-        DCText = transform.Find("Canvas").Find("DC").gameObject;
+        playerButton.OnClick -= SwitchToWeapon;
+        playerButton.OnClick += SwitchToWeapon;
+        weaponButton.OnClick -= SwitchToPlayer;
+        weaponButton.OnClick += SwitchToPlayer;
         coinsText = transform.Find("Canvas").transform.Find("Info").Find("Coins").GetComponent<TMP_Text>();
+    }
+
+    public void SwitchToWeapon() {
+        SelectedScreen = PauseMenuScreen.Weapon;
+    }
+    public void SwitchToPlayer() {
+        SelectedScreen = PauseMenuScreen.Player;
     }
 
     void Start() {
@@ -120,7 +168,7 @@ public class PauseMenu : MonoBehaviour{
         if (mainCam != null && coverSpriteRenderer != null) {
             float height = mainCam.orthographicSize * 2f;
             float width = height * mainCam.aspect;
-            exitButton.transform.position = new Vector3(width / 2 - 0.75f, exitButton.transform.position.y, exitButton.transform.position.z);
+            exitButton.transform.localPosition = new Vector3(width / 2 - 0.75f, exitButton.transform.localPosition.y, exitButton.transform.localPosition.z);
 
             Vector2 spriteSize = coverSpriteRenderer.sprite.bounds.size;
 
@@ -142,9 +190,9 @@ public class PauseMenu : MonoBehaviour{
     public void GameDisconnected() {
         Active = true;
         locked = true;
+        SelectedScreen = PauseMenuScreen.DC;
         exitButton.transform.localPosition = new Vector3(0, originalExitPosition.y, originalExitPosition.z);
         resumeButton.transform.localPosition = new Vector3(originalResumePosition.x, -4, originalResumePosition.z);
-        DCText.SetActive(true);
     }
 
     public void Reset() {
@@ -152,6 +200,6 @@ public class PauseMenu : MonoBehaviour{
         Active = false;
         exitButton.transform.localPosition = originalExitPosition;
         resumeButton.transform.localPosition = originalResumePosition;
-        DCText.SetActive(false);
+        SelectedScreen = PauseMenuScreen.Player;
     }
 }

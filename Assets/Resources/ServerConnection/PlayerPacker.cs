@@ -5,6 +5,7 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(PlayerController))]
 public class PlayerPacker : MonoBehaviour {
+    private static bool isDead;
     private Rigidbody2D rb;
     private PlayerController player;
 
@@ -43,6 +44,11 @@ public class PlayerPacker : MonoBehaviour {
     public static int PacketLength { get; private set; } = 86;
 
     public void GetPacket(List<byte> packet) {
+        if (isDead) {
+            isDead = player.IsDead;
+            return;
+        }
+        isDead = player.IsDead;
         //Identifier
         packet.Add(3); //Look at ConnectionManager, explains each identifier
 

@@ -50,8 +50,6 @@ public class MenuButton : MonoBehaviour
         text.position = nextTextPosition;
         float cameraHeight = Camera.main.orthographicSize * 2f;
         float cameraWidth = cameraHeight * Camera.main.aspect;
-        float offset = Camera.main.transform.GetComponent<MenuScaler>().GetOffset();
-        offset += Camera.main.transform.position.x;
         if (attackAction.WasCompletedThisFrame() && selected && !locked && active) {
             coin.Goto(transform.position.x + transform.localScale.x/2, transform.position.y, action);
             locked = true;
@@ -68,8 +66,6 @@ public class MenuButton : MonoBehaviour
 
         nextPosition = position;
         nextTextPosition = textPosition;
-        position.x += offset;
-        textPosition.x += offset;
 
         transform.localScale = scale;
         text.localScale = scale;

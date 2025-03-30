@@ -17,12 +17,14 @@ public class GameController : MonoBehaviour {
         PauseMenuController.LoseCoins();
     }
     public static byte[] ReceivedPlayerList; // for pause menu info
+    public static byte? spawnOnNewMap;
+    public static bool newMap = false;
 
     public GameObject externalPlayerPrefab;
     public static byte? playerId = null;
     public static GameController Instance { get; private set; }
 
-    private static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
+    public static Dictionary<byte, ExternalPlayerController> externalPlayers = new Dictionary<byte, ExternalPlayerController>();
     public static string GetPlayers() {
         return string.Join(", ", externalPlayers.Select(kvp => $"{kvp.Key}"));
     }
@@ -62,18 +64,19 @@ public class GameController : MonoBehaviour {
 
     public static void RoundOver(byte retrievedCoins, byte winnerId) {
         EarnedCoins += retrievedCoins;
-        PlayerController.BlockInputs = true;
+        PlayerController.Frozen = true;
         foreach (var player in externalPlayers.Values) {
             player.Frozen = true;
         }
         PauseMenuController.Open();
     }
+
     public static void NewRound(byte spawnOffset) {
-        PlayerController.BlockInputs = false;
+        PlayerController.Frozen = false;
         foreach (var player in externalPlayers.Values) {
             player.Frozen = false;
         }
-        Instance?.Respawn(spawnOffset);
+        spawnOnNewMap = spawnOffset;
     }
 
     public void Respawn(byte spawnOffset) {
@@ -110,10 +113,17 @@ public class GameController : MonoBehaviour {
             Unload();
         } else {
             PauseMenuController.enabled = true;
+            PauseMenuController.Close();
         }
         nextMap = currentMap;
-        Dispatcher.Enqueue(() => {respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");});
-        PlayerController.BlockInputs = false;
+        Dispatcher.Enqueue(() => {
+            respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
+            if (spawnOnNewMap != null) {
+                Instance?.Respawn(spawnOnNewMap.Value);
+                spawnOnNewMap = null;
+            }
+        });
+        PlayerController.Frozen = false;
     }
 
     public CoinsMap GetCurrentMap() {
@@ -276,5 +286,6 @@ public class GameController : MonoBehaviour {
 
 public enum CoinsMap {
     Lobby,
+    Facility,
     None
 }

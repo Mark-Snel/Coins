@@ -33,6 +33,13 @@ public static class Shop {
 
     public static ShopItem[] shopItems;
 
+    public static void Reset() {
+        SetShopItems();
+        foreach (var shopItem in shopItems) {
+           shopItem.Reset();
+        }
+    }
+
     private static void SetShopItems() {
         Shop.shopItems = Resources.FindObjectsOfTypeAll<ShopItem>()
             .Where(item => item.gameObject.scene.isLoaded).ToArray();

@@ -84,6 +84,22 @@ public class ShopItem : MonoBehaviour {
         downgradeButton.selected = false;
     }
 
+    public void Reset() {
+        level = 0;
+        maxUnlocked = 0;
+        minUnlocked = 0;
+        title.text = titleText + ": " + level;
+        SetPriceTags();
+        if (level <= min) {
+            downgradeButton.selected = false;
+            downgradeButton.gameObject.SetActive(false);
+        }
+        if (level >= max) {
+            upgradeButton.selected = false;
+            upgradeButton.gameObject.SetActive(false);
+        }
+    }
+
     void Start() {
         titleText = title.text;
         title.text = titleText + ": " + level;

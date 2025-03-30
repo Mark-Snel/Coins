@@ -303,7 +303,7 @@ MonoBehaviour:
   weaponShop: {fileID: 8391576079647445637}
   playerShop: {fileID: 1072397928591705742}
   weaponButton: {fileID: 5042725487841433933}
-  playerButton: {fileID: 5042725487841433933}
+  playerButton: {fileID: 6537527483835702906}
 --- !u!1 &4096643522965173846
 GameObject:
   m_ObjectHideFlags: 0
@@ -2698,6 +2698,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9216519128356249409, guid: ba8da8ad5482d78a2a58e6ddc966efed, type: 3}
   m_PrefabInstance: {fileID: 3029632896194901442}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6537527483835702906 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8120726297202240440, guid: ba8da8ad5482d78a2a58e6ddc966efed, type: 3}
+  m_PrefabInstance: {fileID: 3029632896194901442}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 834aa41cda34582eebe663ae1dd25a36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3690408225314933470
 PrefabInstance:
   m_ObjectHideFlags: 0

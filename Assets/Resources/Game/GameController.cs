@@ -42,6 +42,9 @@ public class GameController : MonoBehaviour {
         }
         ConnectionManager.Disconnect();
         Coins = 0;
+        EarnedCoins = 0;
+        LostCoins = 0;
+        Shop.Reset();
     }
 
     public static void Initialize() {

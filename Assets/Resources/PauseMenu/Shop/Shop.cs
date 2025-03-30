@@ -60,7 +60,7 @@ public static class Shop {
     }
 
     public static void ApplyChanges() {
-        if (shopItems == null) SetShopItems();
+        SetShopItems();
 
         if (shopItems == null || shopItems.Length <= 0) return;
         float speed = Speed;
@@ -93,12 +93,6 @@ public static class Shop {
         int damage = Damage;
 
         foreach (var shopItem in shopItems) {
-            if (shopItem == null) {
-                SetShopItems();
-                ApplyChanges();
-                return;
-            }
-
             speed += shopItem.GetSpeed() ?? 0f;
             acceleration += shopItem.GetAcceleration() ?? 0f;
             jumpHeight += shopItem.GetJumpHeight() ?? 0f;
